@@ -1,6 +1,4 @@
-###################################
-#select from deliver, shop, factory, sleep
-###################################
+#select from deliver, shop, factory
 type = factory
 
 
@@ -24,12 +22,8 @@ all.capacityItemWeight = 10000
 ###################################
 stocking.durationForDeliver = 30
 
-stocking.material.fish.capacity = 1000
-stocking.material.fish.lotmax = 100
-
-stocking.material.water.capacity = 1000
-stocking.material.water.lotmax = 30
-
+stocking.material.wood.capacity = 1000
+stocking.material.wood.lotmax = 30
 
 
 ###################################
@@ -38,9 +32,9 @@ stocking.material.water.lotmax = 30
 ###################################
 shop.durationToSell = 30
 
-shop.product = ソーセージ
-shop.capacity = 1000
-shop.lotmax = 5
+shop.product = dummy
+shop.capacity = 1
+shop.lotmax = 1
 
 
 
@@ -48,10 +42,20 @@ shop.lotmax = 5
 # FactoryRoom
 # for factory
 ###################################
-factory.material.fish.amount = 1
-factory.material.water.amount = 1
+factory.material.wood.amount = 1000
 
 factory.skill = noskill
 factory.durationForMake = 480
-factory.numProductPerMake = 5
+factory.numProductPerMake = 0.01
 factory.capacityMaker = 100000
+
+
+
+
+
+###################################
+# 
+# For Building
+# 
+###################################
+room.採石場 = 2

@@ -1,13 +1,65 @@
+#select from deliver, shop, factory
+type = factory
 
 
-recipe.water = 1000
-recipe.fish = 1000
+###################################
+# room
+# for deliver, shop, factory, sleep
+###################################
+all.capacityHuman = 1000
+all.capacityItemWeight = 10000
 
-workload.noskill = 144000
-workload.中卒 = 144000
 
-capacityBuilder = 30
+###################################
+# RunnableRoom
+# for deliver, shop, factory, sleep
+###################################
 
+
+###################################
+# DeliverRoom
+# for deliver, shop, factory, sleep
+###################################
+stocking.material.stone.capacity = 1000
+stocking.material.stone.lotmax = 30
+
+stocking.material.wood.capacity = 1000
+stocking.material.wood.lotmax = 30
+
+stocking.durationForDeliver = 30
+
+###################################
+# ShopRoom
+# for shop, factory
+###################################
+shop.durationToSell = 30
+
+shop.product = dummy
+shop.capacity = 1
+shop.lotmax = 1
+
+
+
+###################################
+# FactoryRoom
+# for factory
+###################################
+factory.material.stone.amount = 1000
+factory.material.wood.amount = 1000
+
+factory.skill = noskill
+factory.durationForMake = 480
+factory.numProductPerMake = 0.01
+factory.capacityMaker = 100000
+
+
+
+
+
+###################################
+# 
+# For Building
+# 
+###################################
 
 room.ソーセージ工場 = 1
-

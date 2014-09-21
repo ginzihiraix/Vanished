@@ -1,6 +1,7 @@
-
+###################################
 #select from deliver, shop, factory, sleep
-type = sleep
+###################################
+type = factory
 
 
 ###################################
@@ -21,22 +22,25 @@ all.capacityItemWeight = 10000
 # DeliverRoom
 # for deliver, shop, factory
 ###################################
+stocking.durationForDeliver = 30
 
 
 ###################################
 # ShopRoom
 # for shop, factory
 ###################################
+shop.durationToSell = 360
+
+shop.product = sleep
+shop.capacity = 1000
+shop.lotmax = 1
 
 
 ###################################
 # FactoryRoom
 # for factory
 ###################################
-
-
-###################################
-# SleepRoom
-# for sleep
-###################################
-sleep.durationToSleep = 360
+factory.skill = noskill
+factory.durationForMake = 480
+factory.numProductPerMake = 100
+factory.capacityMaker = 100000

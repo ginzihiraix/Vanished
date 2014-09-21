@@ -1,0 +1,5 @@
+#select from general, consumable, movemethod, carrymethod, ...would be added more types
+type = general
+
+#double [kg]
+weight = 1

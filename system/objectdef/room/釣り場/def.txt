@@ -31,7 +31,7 @@ stocking.durationForDeliver = 30
 shop.durationToSell = 30
 
 shop.product = fish
-shop.capacity = 4000
+shop.capacity = 1000
 shop.lotmax = 100
 
 

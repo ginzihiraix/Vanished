@@ -16,10 +16,14 @@ public class Main {
 
 			System.out.println("===Start===");
 
-			GlobalParameter.dm.GetItemDef("fish");
-
-			// Utilityのテスト
+			// XXX:GPのstaticの初期化をキックする。
 			{
+				GlobalParameter.dm.GetItemDef("water");
+
+			}
+
+			// XXX:Utilityのテスト
+			if (false) {
 				UtilityManager um = new UtilityManager();
 
 				System.out.println(um.ComputeUtility(0));
@@ -50,23 +54,21 @@ public class Main {
 			MapManager mm = new MapManager();
 
 			{
-				Building water = new Building(GlobalParameter.dm.GetBuilding("水汲み場"));
-				mm.CreateBuilding(water);
+				mm.CreateBuilding(new Building(GlobalParameter.dm.GetBuilding("伐採場")));
 
-				Building fish = new Building(GlobalParameter.dm.GetBuilding("釣り場"));
-				mm.CreateBuilding(fish);
+				mm.CreateBuilding(new Building(GlobalParameter.dm.GetBuilding("採石場")));
 
-				Building souseiji = new Building(GlobalParameter.dm.GetBuilding("ソーセージ工場"));
-				mm.CreateBuilding(souseiji);
+				mm.CreateBuilding(new Building(GlobalParameter.dm.GetBuilding("水汲み場")));
 
-				// Building sleep = new Building(GlobalParameter.dm.GetBuilding("アパート"));
-				// mm.CreateBuilding(sleep);
+				mm.CreateBuilding(new Building(GlobalParameter.dm.GetBuilding("釣り場")));
+
+				mm.CreateBuilding(new Building(GlobalParameter.dm.GetBuilding("ソーセージ工場")));
 			}
 
 			HumanManager humanManager = new HumanManager(mm);
 
-			long timeLastManage = 0;
-			long timeLast5Year = 0;
+			long timeLast7day = 0;
+			long timeLast100day = 0;
 
 			for (int frame = 0; frame < 10000000; frame++) {
 
@@ -76,10 +78,10 @@ public class Main {
 
 				humanOldest.GenerateAndExecuteAction();
 
-				if (timeNow - timeLast5Year > 60 * 24 * 100) {
-					timeLast5Year = timeNow;
+				if (timeNow - timeLast100day > 60 * 24 * 100) {
+					timeLast100day = timeNow;
 
-					// 数年に一度、ユーティリティの高い人は、子供を生む（分裂する）
+					// ユーティリティの高い人は、子供を生む（分裂する）
 					{
 						ArrayList<Human> nh = new ArrayList<Human>();
 						for (Human human : humanManager.humans) {
@@ -101,7 +103,7 @@ public class Main {
 						humanManager.humans = nh;
 					}
 
-					// 一定期間たっているにも関わらず、黒字転換していない建物は壊す。仮想建物も壊す。
+					// 一定期間たっているにも関わらず、黒字転換していない建物は壊す。
 					{
 
 					}
@@ -111,20 +113,36 @@ public class Main {
 
 					}
 
+					// 仮想建物で、一定期間たっているものに判断を下す。黒字転換できているものは実体化する。できていないものは壊す。
+					{
+
+					}
 				}
 
-				if (timeNow - timeLastManage >= 60 * 24 * 5) {
-					timeLastManage = timeNow;
-					for (Building building : mm.buildingList) {
-						for (Room room : building.GetRoomList()) {
-							if (room instanceof FactoryRoom) {
-								FactoryRoom factoryRoom = (FactoryRoom) room;
-								factoryRoom.DumpStatus(timeNow);
-								factoryRoom.ManagePriceSet(mm, humanManager, timeNow);
+				if (timeNow - timeLast7day >= 60 * 24 * 7) {
+					timeLast7day = timeNow;
+
+					// 建設完了している建物は、建築完了フラグを立てる。
+					{
+						for (Building building : mm.buildingList) {
+							building.CheckBuildingCompleted();
+						}
+
+					}
+
+					// 価格を調整する。
+					{
+						for (Building building : mm.buildingList) {
+							for (Room room : building.GetRoomList()) {
+								if (room instanceof FactoryRoom) {
+									FactoryRoom factoryRoom = (FactoryRoom) room;
+									factoryRoom.DumpStatus(timeNow);
+									factoryRoom.ManagePriceSet(mm, humanManager, timeNow);
+								}
 							}
 						}
+						System.out.println("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%");
 					}
-					System.out.println("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%");
 				}
 			}
 

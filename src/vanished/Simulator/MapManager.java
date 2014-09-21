@@ -209,14 +209,14 @@ public class MapManager {
 		return list;
 	}
 
-	public ArrayList<Building> GetNotCompletedBuildingList(MoveMethod moveMethod, long maxTravelTime, Room currentRoom) {
-		ArrayList<Building> list = new ArrayList<Building>();
-		for (Building building : buildingList) {
-			long travelTime = this.GetTravelTime(moveMethod, building, currentRoom.GetParentBuilding());
-			if (travelTime > maxTravelTime) continue;
-			if (building.IsBuildCompleted() == true) continue;
-			list.add(building);
-		}
-		return list;
-	}
+	// public ArrayList<Building> GetNotCompletedBuildingList(MoveMethod moveMethod, long maxTravelTime, Room currentRoom) {
+	// ArrayList<Building> list = new ArrayList<Building>();
+	// for (Building building : buildingList) {
+	// long travelTime = this.GetTravelTime(moveMethod, building, currentRoom.GetParentBuilding());
+	// if (travelTime > maxTravelTime) continue;
+	// if (building.IsBuildCompleted() == true) continue;
+	// list.add(building);
+	// }
+	// return list;
+	// }
 }

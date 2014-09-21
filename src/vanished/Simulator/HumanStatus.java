@@ -7,7 +7,6 @@ import vanished.Simulator.Item.Item;
 import vanished.Simulator.Item.ItemDef;
 import vanished.Simulator.Item.MoveMethod;
 import vanished.Simulator.Skill.Skill;
-import vanished.Simulator.Structure.Building;
 import vanished.Simulator.Structure.DeliverRoom;
 import vanished.Simulator.Structure.DeliverRoom.CallForItem;
 import vanished.Simulator.Structure.FactoryRoom;
@@ -463,27 +462,6 @@ public class HumanStatus {
 
 		this.wageMovingAverage.Add(this.timeSimulationComplete, moneyEnd - moneyStart);
 		this.totalTimeWork += this.timeSimulationComplete - timeStart;
-	}
-
-	// //////////////////////////////////////////////////////////
-	// //////////////////////////////////////////////////////////
-	// Builderの仕事をやってみる。
-	// //////////////////////////////////////////////////////////
-	// //////////////////////////////////////////////////////////
-
-	public void TryBuilder() throws HumanSimulationException {
-		// 建築中のビルを探す。
-		Building building;
-		{
-			ArrayList<Building> list = mm.GetNotCompletedBuildingList(this.moveMethod, HumanDef.maxMoveTimeForWork, this.currentRoom);
-			int num = list.size();
-			if (num == 0) throw new HumanSimulationException("TryMaker : There are no work place as maker");
-			int index = OtherUtility.rand.nextInt(num);
-			building = list.get(index);
-		}
-
-		// 要求している労働者を調べる。
-		building.GetDesiredBuilderList();
 	}
 
 	// //////////////////////////////////////////////////////////
