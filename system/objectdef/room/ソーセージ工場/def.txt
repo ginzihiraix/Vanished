@@ -1,0 +1,55 @@
+
+#select from deliver, shop, factory, sleep
+type = factory
+
+
+###################################
+# room
+# for deliver, shop, factory, sleep
+###################################
+all.capacityHuman = 1000
+all.capacityItemWeight = 10000
+
+
+###################################
+# RunnableRoom
+# for deliver, shop, factory, sleep
+###################################
+
+
+###################################
+# DeliverRoom
+# for deliver, shop, factory, sleep
+###################################
+stocking.material.fish.capacity = 4000
+stocking.material.fish.lotmax = 30
+
+stocking.material.water.capacity = 4000
+stocking.material.water.lotmax = 10
+
+stocking.durationForDeliver = 30
+
+
+###################################
+# ShopRoom
+# for shop, factory
+###################################
+shop.durationToSell = 30
+
+shop.product = ソーセージ
+shop.capacity = 4000
+shop.lotmax = 5
+
+
+
+###################################
+# FactoryRoom
+# for factory
+###################################
+factory.material.fish.amount = 1
+factory.material.water.amount = 1
+
+factory.skill = noskill
+factory.durationForMake = 480
+factory.numProductPerMake = 5
+factory.capacityMaker = 100000

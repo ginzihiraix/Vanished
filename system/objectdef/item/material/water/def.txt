@@ -1,0 +1,11 @@
+
+#select from general, consumable, movemethod, carrymethod, ...would be added more types
+type = consumable
+
+#double [kg]
+weight = 1
+
+
+utility.duration = 1day
+utility.power.eat.food_water.half = 0.3
+

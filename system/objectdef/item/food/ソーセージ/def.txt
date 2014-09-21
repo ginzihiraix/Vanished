@@ -1,0 +1,39 @@
+
+#select from general, consumable, movemethod, carrymethod, ...would be added more types
+type = consumable
+
+#double [kg]
+weight = 0.1
+
+########################################################### 
+# 効用関数のパラメータ設定方法
+# utility.power.項目名.ユーティリティ名.2個目効用
+# 項目名：eat, sleep, funなど、自由に命名できる。
+# ユーティリティ名：自由に命名できる。
+# 消費期間：効用が1から0に減って行く速度。1day, 1week, 1month, 3month, 6month, 1year, 3year, 10yearから選ぶ。
+# 2個目効用：2個目の効用の1個目の効用に対する比率。equal, threequarter, half, quarter, zeroから選ぶ。
+#
+# 【例1】utility.duration = 1day
+# 【例1】utility.power.eat.food_meat.half = 0.7
+# このアイテムを1個消費したときに、eat.food_meat.1day.halfのスコアが0.7増加する。
+# このスコアは1日で1減る速さで減っていく。
+# このスコアsの効用uは、u(s) = s^pで計算できる。ただし、pは、u(2) - u(1) = 1/2を満たすように設定された値。
+#
+# 【例1】utility.duration = 5year
+# 【例2】utility.power.fun.car.threequater = 0.3
+# このアイテムを1個消費したときに、fun.car.3year.threequaterのスコアが0.3増加する。
+# このスコアは3年で1減る速さで減っていく。
+# このスコアsの効用uは、u(s) = s^pで計算できる。ただし、pは、u(2) - u(1) = 1/2を満たすように設定された値。
+########################################################### 
+utility.duration = 1day
+utility.power.eat.food_meat.half = 0.2
+utility.power.eat.food_good.half = 0.2
+
+
+
+
+
+
+
+
+

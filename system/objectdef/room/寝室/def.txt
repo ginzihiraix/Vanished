@@ -1,0 +1,42 @@
+
+#select from deliver, shop, factory, sleep
+type = sleep
+
+
+###################################
+# room
+# for deliver, shop, factory, sleep
+###################################
+all.capacityHuman = 1000
+all.capacityItemWeight = 10000
+
+
+###################################
+# RunnableRoom
+# for deliver, shop, factory, sleep
+###################################
+
+
+###################################
+# DeliverRoom
+# for deliver, shop, factory
+###################################
+
+
+###################################
+# ShopRoom
+# for shop, factory
+###################################
+
+
+###################################
+# FactoryRoom
+# for factory
+###################################
+
+
+###################################
+# SleepRoom
+# for sleep
+###################################
+sleep.durationToSleep = 360

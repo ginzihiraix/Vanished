@@ -1,0 +1,13 @@
+
+
+recipe.water = 1000
+recipe.fish = 1000
+
+workload.noskill = 144000
+workload.’†‘² = 144000
+
+capacityBuilder = 30
+
+
+room.’Ş‚èê = 20
+
