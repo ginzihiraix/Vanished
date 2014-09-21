@@ -62,5 +62,5 @@ factory.capacityMaker = 100000
 # For Building
 # 
 ###################################
-room.…‹‚‚İê = 2
+room.…‹‚‚İê = 1
 

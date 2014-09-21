@@ -2,6 +2,8 @@ package vanished.Simulator.Structure;
 
 import java.util.ArrayList;
 
+import vanished.Simulator.OtherUtility;
+
 public class Building {
 	BuildingDef buildingDef;
 
@@ -14,7 +16,9 @@ public class Building {
 	// 所属するRoomの一覧
 	ArrayList<Room> roomList = new ArrayList<Room>();
 
-	public Building(BuildingDef buildingDef) throws Exception {
+	long timeStart;
+
+	public Building(long timeNow, BuildingDef buildingDef) throws Exception {
 		this.buildingDef = buildingDef;
 
 		buildRoom = new FactoryRoom(this, buildingDef.buildRoomDef, true);
@@ -28,16 +32,28 @@ public class Building {
 			}
 			roomList.add(room);
 		}
+
+		this.timeStart = timeNow;
 	}
 
 	public void CheckBuildingCompleted() {
 		if (buildCompletedFlag == false) {
 			if (buildRoom.shopStockManager.GetNumStock() >= 1) {
+				System.out.println("祝、建設完成！！！！！！！！！");
 				buildRoom.DumpStatus(0);
-				System.out.println("建設完成");
 				this.buildCompletedFlag = true;
 			}
 		}
+	}
+
+	public boolean CheckRecoverInitialCost(long timeNow) {
+		if (timeNow < timeStart + OtherUtility.durationRecoverInitialCost) return true;
+		double total = buildRoom.GetMoney();
+		for (Room room : roomList) {
+			total += room.GetMoney();
+		}
+		if (total < 0) return false;
+		return true;
 	}
 
 	public ArrayList<Room> GetRoomList() {

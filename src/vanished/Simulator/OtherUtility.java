@@ -8,6 +8,8 @@ public class OtherUtility {
 
 	static public double wageMin = 0.1 / (60 * 8);
 
+	static public long durationRecoverInitialCost = 60L * 24L * 365L;
+
 	public static double RandGaussian() {
 		double a = rand.nextDouble();
 		double b = rand.nextDouble();

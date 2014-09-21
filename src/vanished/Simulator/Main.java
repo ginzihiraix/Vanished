@@ -54,15 +54,15 @@ public class Main {
 			MapManager mm = new MapManager();
 
 			{
-				mm.CreateBuilding(new Building(GlobalParameter.dm.GetBuilding("伐採場")));
-
-				mm.CreateBuilding(new Building(GlobalParameter.dm.GetBuilding("採石場")));
-
-				mm.CreateBuilding(new Building(GlobalParameter.dm.GetBuilding("水汲み場")));
-
-				mm.CreateBuilding(new Building(GlobalParameter.dm.GetBuilding("釣り場")));
-
-				mm.CreateBuilding(new Building(GlobalParameter.dm.GetBuilding("ソーセージ工場")));
+				mm.CreateBuilding(new Building(0, GlobalParameter.dm.GetBuilding("伐採場")));
+				mm.CreateBuilding(new Building(0, GlobalParameter.dm.GetBuilding("伐採場")));
+				mm.CreateBuilding(new Building(0, GlobalParameter.dm.GetBuilding("採石場")));
+				mm.CreateBuilding(new Building(0, GlobalParameter.dm.GetBuilding("採石場")));
+				mm.CreateBuilding(new Building(0, GlobalParameter.dm.GetBuilding("水汲み場")));
+				mm.CreateBuilding(new Building(0, GlobalParameter.dm.GetBuilding("水汲み場")));
+				mm.CreateBuilding(new Building(0, GlobalParameter.dm.GetBuilding("釣り場")));
+				mm.CreateBuilding(new Building(0, GlobalParameter.dm.GetBuilding("釣り場")));
+				mm.CreateBuilding(new Building(0, GlobalParameter.dm.GetBuilding("ソーセージ工場")));
 			}
 
 			HumanManager humanManager = new HumanManager(mm);
@@ -105,7 +105,12 @@ public class Main {
 
 					// 一定期間たっているにも関わらず、黒字転換していない建物は壊す。
 					{
-
+						ArrayList<Building> alive = new ArrayList<Building>();
+						for (Building building : mm.buildingList) {
+							if (building.CheckRecoverInitialCost(timeNow) == false) continue;
+							alive.add(building);
+						}
+						mm.buildingList = alive;
 					}
 
 					// 仮想建物を追加する。

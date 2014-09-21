@@ -278,7 +278,7 @@ public class Human {
 		long year = (this.humanStatus.timeSimulationComplete - this.humanStatus.timeBorn) / (60L * 24L * 365L);
 		if (year > 3) {
 			return true;
-		} else if (year > 1) {
+		} else if (year >= 1) {
 			if (utilAverage > HumanDef.thresholdUtilityForDeath) {
 				return false;
 			} else {
