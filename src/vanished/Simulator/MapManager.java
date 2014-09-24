@@ -40,7 +40,7 @@ public class MapManager {
 	public ArrayList<Building> GetBuildingList(int left, int right, int bottom, int top) {
 		ArrayList<Building> ret = new ArrayList<Building>();
 		for (Building building : buildingList) {
-			Rect rect = building.OccupiedVoxel();
+			Rect rect = building.GetLocation();
 			if (rect.right < left || rect.left >= right || rect.top < bottom || rect.bottom >= top) continue;
 			ret.add(building);
 		}

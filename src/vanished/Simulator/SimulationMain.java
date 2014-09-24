@@ -101,7 +101,7 @@ public class SimulationMain extends Thread {
 					{
 						ArrayList<Building> alive = new ArrayList<Building>();
 						for (Building building : mapManager.buildingList) {
-							if (building.CheckRecoverInitialCost(timeNow) == false) continue;
+							if (building.IsInitialCostRecovered(timeNow) == false) continue;
 							alive.add(building);
 						}
 						mapManager.buildingList = alive;
@@ -124,7 +124,7 @@ public class SimulationMain extends Thread {
 					// 建設完了している建物は、建築完了フラグを立てる。
 					{
 						for (Building building : mapManager.buildingList) {
-							building.CheckBuildingCompleted();
+							building.IsBuildCompleted();
 						}
 
 					}

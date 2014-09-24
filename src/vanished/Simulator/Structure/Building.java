@@ -23,6 +23,8 @@ public class Building {
 
 	// 3次元上の位置
 	Location location;
+
+	// 方角。{0,1,2,3} = {N,E,S,W}
 	int direction = 0;
 
 	public Building(long timeNow, BuildingDef buildingDef, Location location, int direction) throws Exception {
@@ -46,7 +48,7 @@ public class Building {
 		this.direction = direction;
 	}
 
-	public Rect OccupiedVoxel() {
+	public Rect GetLocation() {
 		if (direction == 0) {
 			Rect rect = new Rect(location.x, location.x + buildingDef.width, location.y, location.y + buildingDef.height);
 			return rect;
@@ -64,7 +66,7 @@ public class Building {
 		}
 	}
 
-	public void CheckBuildingCompleted() {
+	public void IsBuildCompleted() {
 		if (buildCompletedFlag == false) {
 			if (buildRoom.shopStockManager.GetNumStock() >= 1) {
 				System.out.println("祝、建設完成！！！！！！！！！");
@@ -74,7 +76,7 @@ public class Building {
 		}
 	}
 
-	public boolean CheckRecoverInitialCost(long timeNow) {
+	public boolean IsInitialCostRecovered(long timeNow) {
 		if (timeNow < timeStart + OtherUtility.durationRecoverInitialCost) return true;
 		double total = buildRoom.GetMoney();
 		for (Room room : roomList) {

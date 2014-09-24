@@ -43,7 +43,7 @@ public class GraphicManager {
 
 		ArrayList<Building> buildingList = mm.GetBuildingList(cx - numPlane, cx + numPlane, cy - numPlane, cy + numPlane);
 		for (Building building : buildingList) {
-			Rect rect = building.OccupiedVoxel();
+			Rect rect = building.GetLocation();
 			for (int x = rect.left; x < rect.right; x++) {
 				for (int z = rect.bottom; z < rect.top; z++) {
 					vm.PutVoxel(x, 1, z, 1);
