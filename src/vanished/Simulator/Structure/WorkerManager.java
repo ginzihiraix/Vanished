@@ -9,10 +9,10 @@ public class WorkerManager {
 	double wage = 1;
 
 	// •”‰®‚É‚¢‚é˜J“­ŽÒ‚ÌƒŠƒXƒg
-	HumanExistRecordManager workerExistRecordManager = new HumanExistRecordManager();
+	private HumanExistRecordManager workerExistRecordManager = new HumanExistRecordManager();
 
 	// ‰ß‹Ž‚Ì˜J“­ŽÒ‚Ì˜J“­ƒƒOB
-	HumanExistRecordManager workerHistory = new HumanExistRecordManager();
+	private HumanExistRecordManager workerHistory = new HumanExistRecordManager();
 
 	// ‚ ‚éŠúŠÔ‚ÌA•”‰®‚É‚¢‚é˜J“­ŽÒ‚Ì•½‹Ï”‚ªAÅ’á‰Ò“®l”‚æ‚è‘½‚¢‚©’²‚×‚éB
 	public boolean IsRunnable(WorkerRequirement wc, long timeStart, long duration) {
@@ -23,7 +23,7 @@ public class WorkerManager {
 
 	// ˜J“­ŽÒ‚ª•”‰®‚É“ü‚ê‚é‚©’²‚×‚éB
 	public boolean IsEnterableAsWorker(WorkerRequirement wc, long timeStart, long duration) {
-		int numMaxWorker = this.workerExistRecordManager.MaxNum(timeStart, duration);
+		double numMaxWorker = this.workerExistRecordManager.MaxNum(timeStart, duration);
 		if (numMaxWorker + 1 >= wc.workerCapacityForRun) return false;
 		return true;
 	}
@@ -56,8 +56,8 @@ public class WorkerManager {
 		if (this.IsEnterableAsWorker(wc, timeStart, duration) == false) throw new HumanSimulationException(
 				"WorkerManager : no capacity for human resources");
 		if (simulation == false) {
-			this.workerExistRecordManager.Add(timeStart, duration);
-			this.workerHistory.Add(timeStart, duration);
+			this.workerExistRecordManager.Add(timeStart, duration, 1);
+			this.workerHistory.Add(timeStart, duration, 1);
 		}
 	}
 }

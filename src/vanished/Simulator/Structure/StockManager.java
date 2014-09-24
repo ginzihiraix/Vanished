@@ -25,20 +25,20 @@ public class StockManager {
 		inventory = new Inventory(stockManagerInfo.capacity * itemDef.GetWeight());
 	}
 
-	public int GetCapacity() {
-		int ret = (int) (inventory.GetCapacity() / itemDef.GetWeight());
+	public double GetCapacity() {
+		double ret = inventory.GetCapacity() / itemDef.GetWeight();
 		return ret;
 	}
 
-	public int FindStockSpace() {
+	public double FindStockSpace() {
 		return this.inventory.FindSpace(itemDef);
 	}
 
-	public int GetNumStock() {
+	public double GetNumStock() {
 		return this.inventory.GetNumStock(itemDef);
 	}
 
-	public Item Get(long timeNow, int numPick, boolean simulation) throws HumanSimulationException {
+	public Item Get(long timeNow, double numPick, boolean simulation) throws HumanSimulationException {
 		Item ret;
 		if (simulation == false) {
 			ret = this.inventory.Get(itemDef, numPick);
@@ -61,9 +61,9 @@ public class StockManager {
 		}
 	}
 
-	public int GetCurrentMaxLot() {
-		int space = this.inventory.FindSpace(itemDef);
-		int lot;
+	public double GetCurrentMaxLot() {
+		double space = this.inventory.FindSpace(itemDef);
+		double lot;
 		if (space < this.stockManagerInfo.lotmax) {
 			lot = space;
 		} else {

@@ -41,9 +41,9 @@ public class DeliverRoom extends RunnableRoom {
 	public class CallForItem {
 		public ItemDef itemDef;
 		public double price;
-		public int lotmax;
+		public double lotmax;
 
-		public CallForItem(ItemDef itemDef, double price, int lotmax) {
+		public CallForItem(ItemDef itemDef, double price, double lotmax) {
 			this.itemDef = itemDef;
 			this.price = price;
 			this.lotmax = lotmax;
@@ -58,7 +58,7 @@ public class DeliverRoom extends RunnableRoom {
 		for (Entry<ItemDef, StockManager> e : deliverStockManager.entrySet()) {
 			ItemDef itemDef = e.getKey();
 			StockManager sm = e.getValue();
-			int lotmax = sm.GetCurrentMaxLot();
+			double lotmax = sm.GetCurrentMaxLot();
 			double price = sm.price * Math.pow(1.02, OtherUtility.rand.nextInt(11) - 11 / 2);
 			CallForItem callForItem = new CallForItem(itemDef, price, lotmax);
 			callForItemList.add(callForItem);
@@ -69,7 +69,7 @@ public class DeliverRoom extends RunnableRoom {
 	// îÉÇ¢éÊÇËèÓïÒÇéÊìæÇ∑ÇÈÅBâ“ìÆÇµÇƒÇÈÇ©Ç«Ç§Ç©ÇÕãCÇ…ÇµÇ»Ç¢ÅB
 	public CallForItem GetDesiredItem(ItemDef itemDef) {
 		StockManager sm = deliverStockManager.get(itemDef);
-		int lotmax = sm.GetCurrentMaxLot();
+		double lotmax = sm.GetCurrentMaxLot();
 		double price = sm.price * Math.pow(1.02, OtherUtility.rand.nextInt(11) - 11 / 2);
 		CallForItem callForItem = new CallForItem(itemDef, price, lotmax);
 		return callForItem;

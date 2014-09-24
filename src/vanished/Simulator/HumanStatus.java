@@ -136,14 +136,16 @@ public class HumanStatus {
 		long timeEnd;
 		double utilStart;
 		double utilEnd;
+		boolean realFlag;
 
-		public TryResult(double moneyStart, double moneyEnd, long timeStart, long timeEnd, double utilStart, double utilEnd) {
+		public TryResult(double moneyStart, double moneyEnd, long timeStart, long timeEnd, double utilStart, double utilEnd, boolean realFlag) {
 			this.moneyStart = moneyStart;
 			this.moneyEnd = moneyEnd;
 			this.timeStart = timeStart;
 			this.timeEnd = timeEnd;
 			this.utilStart = utilStart;
 			this.utilEnd = utilEnd;
+			this.realFlag = realFlag;
 		}
 	}
 
@@ -158,11 +160,11 @@ public class HumanStatus {
 		ShopRoom shopRoom;
 		ItemCatalog itemCatalog;
 		ItemDef itemDef;
-		int numPick;
+		double numPick;
 
-		public TraderWorkResult(ShopRoom shopRoom, CallForItem callForItem, DeliverRoom deliverRoom, ItemCatalog itemCatalog, ItemDef itemDef,
-				int numPick, double moneyStart, double moneyEnd, long timeStart, long timeEnd, double utilStart, double utilEnd) {
-			super(moneyStart, moneyEnd, timeStart, timeEnd, utilStart, utilEnd);
+		public TraderWorkResult(double moneyStart, double moneyEnd, long timeStart, long timeEnd, double utilStart, double utilEnd, boolean realFlag,
+				ShopRoom shopRoom, CallForItem callForItem, DeliverRoom deliverRoom, ItemCatalog itemCatalog, ItemDef itemDef, double numPick) {
+			super(moneyStart, moneyEnd, timeStart, timeEnd, utilStart, utilEnd, realFlag);
 
 			this.shopRoom = shopRoom;
 			this.callForItem = callForItem;
@@ -170,6 +172,7 @@ public class HumanStatus {
 			this.itemCatalog = itemCatalog;
 			this.itemDef = itemDef;
 			this.numPick = numPick;
+			this.realFlag = realFlag;
 		}
 
 		@Override
@@ -222,8 +225,9 @@ public class HumanStatus {
 		// ランダムに購入店を選ぶ。
 		ShopRoom shopRoom;
 		{
+			boolean realOnlyFlag = deliverRoom.IsReal() == false;
 			ArrayList<ShopRoom> list = mm.GetShopRoomList(this.moveMethod, HumanDef.maxMoveTimeForTrade, Double.MAX_VALUE, this.currentRoom,
-					callForItem.itemDef);
+					callForItem.itemDef, realOnlyFlag);
 			int num = list.size();
 			if (num == 0) throw new HumanSimulationException("TryTrader : There are no shop to buy the desired items");
 			int index = OtherUtility.rand.nextInt(num);
@@ -238,8 +242,8 @@ public class HumanStatus {
 		}
 
 		// 転売できる最大量を計算する。
-		int numPick = Integer.MAX_VALUE;
-		int numPickMaxFromMoney = (int) (money / itemCatalog.price);
+		double numPick = Double.MAX_VALUE;
+		double numPickMaxFromMoney = money / itemCatalog.price;
 		if (numPickMaxFromMoney < numPick) numPick = numPickMaxFromMoney;
 		if (callForItem.lotmax < numPick) numPick = callForItem.lotmax;
 		if (itemCatalog.lotmax < numPick) numPick = itemCatalog.lotmax;
@@ -265,8 +269,10 @@ public class HumanStatus {
 		long timeEnd = this.timeSimulationComplete;
 		double utilEnd = this.ComputeUtility();
 
-		TraderWorkResult result = new TraderWorkResult(shopRoom, callForItem, deliverRoom, itemCatalog, callForItem.itemDef, numPick, moneyStart,
-				moneyEnd, timeStart, timeEnd, utilStart, utilEnd);
+		boolean realFlag = deliverRoom.IsReal() && shopRoom.IsReal();
+
+		TraderWorkResult result = new TraderWorkResult(moneyStart, moneyEnd, timeStart, timeEnd, utilStart, utilEnd, realFlag, shopRoom, callForItem,
+				deliverRoom, itemCatalog, callForItem.itemDef, numPick);
 		return result;
 	}
 
@@ -296,83 +302,6 @@ public class HumanStatus {
 
 	// //////////////////////////////////////////////////////////
 	// //////////////////////////////////////////////////////////
-	// Workerの仕事をやってみる。
-	// //////////////////////////////////////////////////////////
-	// //////////////////////////////////////////////////////////
-	public class WorkerWorkResult extends TryResult {
-		RunnableRoom runnableRoom;
-		CallForWorker cfw;
-
-		public WorkerWorkResult(RunnableRoom runnableRoom, CallForWorker cfw, double moneyStart, double moneyEnd, long timeStart, long timeEnd,
-				double utilStart, double utilEnd) {
-			super(moneyStart, moneyEnd, timeStart, timeEnd, utilStart, utilEnd);
-
-			this.runnableRoom = runnableRoom;
-			this.cfw = cfw;
-		}
-	}
-
-	public WorkerWorkResult TryWorker() throws Exception {
-		// System.out.println("TryWorker");
-
-		// ランダムに労働場所を選ぶ。
-		RunnableRoom runnableRoom;
-		{
-			ArrayList<RunnableRoom> list = mm.GetRunnableRoomList(this.moveMethod, HumanDef.maxMoveTimeForWork, this.currentRoom);
-			int num = list.size();
-			if (num == 0) throw new HumanSimulationException("TryTrader : There are no work place as worker");
-			int index = OtherUtility.rand.nextInt(num);
-			runnableRoom = list.get(index);
-		}
-
-		// 要求している労働者を調べる。
-		CallForWorker cfw;
-		{
-			ArrayList<CallForWorker> list = runnableRoom.GetDesiredWorker();
-			int num = list.size();
-			if (num == 0) throw new HumanSimulationException("TryTrader : There are no skill position for this human in the selected working place");
-			int index = OtherUtility.rand.nextInt(num);
-			cfw = list.get(index);
-		}
-
-		double moneyStart = this.money;
-		long timeStart = this.timeSimulationComplete;
-		double utilStart = this.ComputeUtility();
-
-		this.Move(runnableRoom);
-
-		this.Work(cfw, true);
-
-		double moneyEnd = this.money;
-		long timeEnd = this.timeSimulationComplete;
-		double utilEnd = this.ComputeUtility();
-
-		WorkerWorkResult wwr = new WorkerWorkResult(runnableRoom, cfw, moneyStart, moneyEnd, timeStart, timeEnd, utilStart, utilEnd);
-
-		return wwr;
-	}
-
-	public void DoWorker(WorkerWorkResult res) throws Exception {
-		System.out.println(String.format("DoWorker : worked at %s with $%f", res.runnableRoom.GetName(), res.cfw.GetWage()));
-
-		double moneyStart = this.money;
-		long timeStart = this.timeSimulationComplete;
-		double utilStart = this.ComputeUtility();
-
-		this.Move(res.runnableRoom);
-
-		this.Work(res.cfw, false);
-
-		double moneyEnd = this.money;
-		long timeEnd = this.timeSimulationComplete;
-		double utilEnd = this.ComputeUtility();
-
-		this.wageMovingAverage.Add(this.timeSimulationComplete, moneyEnd - moneyStart);
-		totalTimeWork += this.timeSimulationComplete - timeStart;
-	}
-
-	// //////////////////////////////////////////////////////////
-	// //////////////////////////////////////////////////////////
 	// Makerの仕事をやってみる。
 	// //////////////////////////////////////////////////////////
 	// //////////////////////////////////////////////////////////
@@ -380,9 +309,9 @@ public class HumanStatus {
 		FactoryRoom factoryRoom;
 		CallForMaker cfm;
 
-		public MakerWorkResult(FactoryRoom factoryRoom, CallForMaker cfm, double moneyStart, double moneyEnd, long timeStart, long timeEnd,
-				double utilStart, double utilEnd) {
-			super(moneyStart, moneyEnd, timeStart, timeEnd, utilStart, utilEnd);
+		public MakerWorkResult(double moneyStart, double moneyEnd, long timeStart, long timeEnd, double utilStart, double utilEnd, boolean realFlag,
+				FactoryRoom factoryRoom, CallForMaker cfm) {
+			super(moneyStart, moneyEnd, timeStart, timeEnd, utilStart, utilEnd, realFlag);
 			this.factoryRoom = factoryRoom;
 			this.cfm = cfm;
 		}
@@ -441,7 +370,9 @@ public class HumanStatus {
 		long timeEnd = this.timeSimulationComplete;
 		double utilEnd = this.ComputeUtility();
 
-		MakerWorkResult wwr = new MakerWorkResult(factoryRoom, cfm, moneyStart, moneyEnd, timeStart, timeEnd, utilStart, utilEnd);
+		boolean realFlag = factoryRoom.IsReal();
+
+		MakerWorkResult wwr = new MakerWorkResult(moneyStart, moneyEnd, timeStart, timeEnd, utilStart, utilEnd, realFlag, factoryRoom, cfm);
 		return wwr;
 	}
 
@@ -471,7 +402,7 @@ public class HumanStatus {
 	// //////////////////////////////////////////////////////////
 	public class NopResult extends TryResult {
 		public NopResult(double moneyStart, double moneyEnd, long timeStart, long timeEnd, double utilStart, double utilEnd) {
-			super(moneyStart, moneyEnd, timeStart, timeEnd, utilStart, utilEnd);
+			super(moneyStart, moneyEnd, timeStart, timeEnd, utilStart, utilEnd, true);
 		}
 
 		@Override
@@ -516,8 +447,8 @@ public class HumanStatus {
 		ItemCatalog itemCatalog;
 
 		public ConsumeResult(ShopRoom shopRoom, ItemCatalog itemCatalog, double moneyStart, double moneyEnd, long timeStart, long timeEnd,
-				double utilStart, double utilEnd) {
-			super(moneyStart, moneyEnd, timeStart, timeEnd, utilStart, utilEnd);
+				double utilStart, double utilEnd, boolean realFlag) {
+			super(moneyStart, moneyEnd, timeStart, timeEnd, utilStart, utilEnd, realFlag);
 			this.shopRoom = shopRoom;
 			this.itemCatalog = itemCatalog;
 		}
@@ -573,7 +504,9 @@ public class HumanStatus {
 		long timeEnd = this.timeSimulationComplete;
 		double utilEnd = this.ComputeUtility();
 
-		ConsumeResult res = new ConsumeResult(consumeRoom, consumeItemCatalog, moneyStart, moneyEnd, timeStart, timeEnd, utilStart, utilEnd);
+		boolean realFlag = consumeRoom.IsReal();
+
+		ConsumeResult res = new ConsumeResult(consumeRoom, consumeItemCatalog, moneyStart, moneyEnd, timeStart, timeEnd, utilStart, utilEnd, realFlag);
 		return res;
 	}
 
@@ -622,7 +555,7 @@ public class HumanStatus {
 		this.utilityMovingAverage.Add(this.timeSimulationComplete, this.ComputeUtility());
 	}
 
-	public void Buy(ItemCatalog itemCatalog, int numPick, boolean simulation) throws Exception {
+	public void Buy(ItemCatalog itemCatalog, double numPick, boolean simulation) throws Exception {
 		ShopRoom shopRoom = (ShopRoom) this.currentRoom;
 
 		long timeDelta = shopRoom.GetDurationToBuy();
@@ -636,7 +569,7 @@ public class HumanStatus {
 		this.utilityMovingAverage.Add(this.timeSimulationComplete, this.ComputeUtility());
 	}
 
-	public void Sell(ItemDef itemDef, double price, int numPick, boolean simulation) throws Exception {
+	public void Sell(ItemDef itemDef, double price, double numPick, boolean simulation) throws Exception {
 		DeliverRoom deliverRoom = (DeliverRoom) this.currentRoom;
 
 		long timeDelta = deliverRoom.GetDurationToSell(itemDef);

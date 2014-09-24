@@ -6,10 +6,10 @@ import vanished.Simulator.Inventory;
 
 public class Room {
 
-	RoomDef roomDef;
+	protected RoomDef roomDef;
 
 	// 所属するビル
-	Building building;
+	private Building building;
 
 	// 店が保有しているお金
 	private double money = 0;
@@ -18,14 +18,18 @@ public class Room {
 	private ExponentialMovingAverage moneyMovingAverage = new ExponentialMovingAverage(60 * 24 * 365, true);
 
 	// 部屋にいる人のリスト
-	HumanExistRecordManager humanExistRoomManager = new HumanExistRecordManager();
+	private HumanExistRecordManager humanExistRoomManager = new HumanExistRecordManager();
 
 	// 部屋にあるアイテムのリスト
-	Inventory itemInventory = new Inventory();
+	private Inventory itemInventory = new Inventory();
 
 	public Room(Building building, RoomDef roomDef) {
 		this.roomDef = roomDef;
 		this.building = building;
+	}
+
+	public boolean IsReal() {
+		return this.building.realFlag;
 	}
 
 	public void DumpStatus(long timeNow) {
@@ -51,7 +55,7 @@ public class Room {
 	// 部屋に入れるかどうか調べる。
 	private boolean IsEnterable(long timeStart, long duration) {
 		// 部屋に入れるかどうか調べる。
-		int num = humanExistRoomManager.MaxNum(timeStart, duration);
+		double num = humanExistRoomManager.MaxNum(timeStart, duration);
 		if (num + 1 >= roomDef.capacityHuman) return false;
 		return true;
 	}
@@ -59,7 +63,7 @@ public class Room {
 	public void Enter(long timeStart, long duration, boolean simulation) throws HumanSimulationException {
 		if (this.IsEnterable(timeStart, duration) == false) throw new HumanSimulationException("RunnableRoom.Work : human capacity is full");
 		if (simulation == false) {
-			humanExistRoomManager.Add(timeStart, duration);
+			humanExistRoomManager.Add(timeStart, duration, 1);
 		}
 	}
 

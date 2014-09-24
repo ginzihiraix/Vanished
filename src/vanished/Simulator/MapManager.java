@@ -146,10 +146,13 @@ public class MapManager {
 		return list;
 	}
 
-	public ArrayList<ShopRoom> GetShopRoomList(MoveMethod moveMethod, long maxTravelTime, double maxMoney, Room currentRoom, ItemDef desiredItem) {
+	public ArrayList<ShopRoom> GetShopRoomList(MoveMethod moveMethod, long maxTravelTime, double maxMoney, Room currentRoom, ItemDef desiredItem,
+			boolean realOnlyFlag) {
 		ArrayList<ShopRoom> list = new ArrayList<ShopRoom>();
 		for (Building building : buildingList) {
 			for (Room room : building.GetRoomList()) {
+				if (realOnlyFlag == true && room.IsReal() == false) continue;
+
 				if (room instanceof ShopRoom) {
 					ShopRoom shopRoom = (ShopRoom) room;
 

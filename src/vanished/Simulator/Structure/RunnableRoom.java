@@ -53,10 +53,10 @@ public class RunnableRoom extends Room {
 		RunnableRoomDef roomDef = (RunnableRoomDef) this.roomDef;
 
 		// 稼動に必要な装備品は全てそろっているかチェック。
-		for (Entry<ItemDef, Integer> e : roomDef.equipItemListForRun.entrySet()) {
+		for (Entry<ItemDef, Double> e : roomDef.equipItemListForRun.entrySet()) {
 			ItemDef itemDef = e.getKey();
-			int numEquipment = e.getValue();
-			int numItem = this.runnableEquipItemInventory.GetNumStock(itemDef);
+			double numEquipment = e.getValue();
+			double numItem = this.runnableEquipItemInventory.GetNumStock(itemDef);
 			if (numItem < numEquipment) return false;
 		}
 

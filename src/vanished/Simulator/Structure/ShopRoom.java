@@ -12,9 +12,9 @@ public class ShopRoom extends DeliverRoom {
 	public class ItemCatalog {
 		public ItemDef itemDef;
 		public double price;
-		public int lotmax;
+		public double lotmax;
 
-		public ItemCatalog(ItemDef itemDef, double price, int maxLot) {
+		public ItemCatalog(ItemDef itemDef, double price, double maxLot) {
 			this.itemDef = itemDef;
 			this.price = price;
 			this.lotmax = maxLot;
@@ -42,7 +42,7 @@ public class ShopRoom extends DeliverRoom {
 		double price = this.shopStockManager.price * Math.pow(1.02, OtherUtility.rand.nextInt(11) - 11 / 2);
 		if (price > maxMoney) return null;
 
-		int numStock = this.shopStockManager.GetNumStock();
+		double numStock = this.shopStockManager.GetNumStock();
 		if (stockCheck == true) {
 			if (numStock == 0) return null;
 		}
@@ -58,7 +58,7 @@ public class ShopRoom extends DeliverRoom {
 		double price = this.shopStockManager.price * Math.pow(1.02, OtherUtility.rand.nextInt(11) - 11 / 2);
 		if (price > maxMoney) return null;
 
-		int numStock = this.shopStockManager.GetNumStock();
+		double numStock = this.shopStockManager.GetNumStock();
 		if (stockCheck == true) {
 			if (numStock == 0) return null;
 		}
@@ -73,7 +73,7 @@ public class ShopRoom extends DeliverRoom {
 		return shopStockManager.price;
 	}
 
-	public int GetProductItemStock() {
+	public double GetProductItemStock() {
 		return shopStockManager.GetNumStock();
 	}
 
@@ -84,7 +84,7 @@ public class ShopRoom extends DeliverRoom {
 	}
 
 	// è§ïiÇîÉÇ§
-	public Item BuyProductItem(long timeNow, double maxMoney, ItemCatalog itemCatalog, int numPick, boolean simulation)
+	public Item BuyProductItem(long timeNow, double maxMoney, ItemCatalog itemCatalog, double numPick, boolean simulation)
 			throws HumanSimulationException {
 		ShopRoomDef shopRoomDef = (ShopRoomDef) roomDef;
 

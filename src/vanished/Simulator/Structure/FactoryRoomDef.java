@@ -37,13 +37,13 @@ public class FactoryRoomDef extends ShopRoomDef {
 		double numProductPerMake;
 
 		// 製造者のキャパシティ
-		int capacityMaker;
+		double capacityMaker;
 
 		public FactoryMakerInfo(Skill skill, String prefix, Properties p) {
 			this.skill = skill;
-			this.durationForMake = Integer.parseInt(p.getProperty(prefix + "durationForMake"));
+			this.durationForMake = Long.parseLong(p.getProperty(prefix + "durationForMake"));
 			this.numProductPerMake = Double.parseDouble(p.getProperty(prefix + "numProductPerMake"));
-			this.capacityMaker = Integer.parseInt(p.getProperty(prefix + "capacityMaker"));
+			this.capacityMaker = Double.parseDouble(p.getProperty(prefix + "capacityMaker"));
 		}
 	}
 

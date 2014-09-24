@@ -8,12 +8,13 @@ public class HumanExistRecordManager {
 	public class HumanExistRecord {
 		public long timeStart;
 		public long duration;
+		public double num;
 
-		public HumanExistRecord(long timeStart, long duration) {
+		public HumanExistRecord(long timeStart, long duration, double num) {
 			this.timeStart = timeStart;
 			this.duration = duration;
+			this.num = num;
 		}
-
 	}
 
 	LinkedList<HumanExistRecord> recordList = new LinkedList<HumanExistRecord>();
@@ -22,28 +23,27 @@ public class HumanExistRecordManager {
 
 	}
 
-	public void Add(long timeStart, long duration) {
-		HumanExistRecord r = new HumanExistRecord(timeStart, duration);
+	public void Add(long timeStart, long duration, double num) {
+		HumanExistRecord r = new HumanExistRecord(timeStart, duration, num);
 		recordList.addLast(r);
 	}
 
-	public int MaxNum(long timeStart, long duration) {
+	public double MaxNum(long timeStart, long duration) {
 		if (recordList.size() == 0) return 0;
 
-		HumanExistRecord r = new HumanExistRecord(timeStart, duration);
-		int length = (int) r.duration;
-		int[] count = new int[length];
+		int length = (int) duration;
+		double[] count = new double[length];
 		for (HumanExistRecord r2 : recordList) {
-			long s = r.timeStart > r2.timeStart ? r.timeStart : r2.timeStart;
+			long s = timeStart > r2.timeStart ? timeStart : r2.timeStart;
 			for (long t = s; t < r2.timeStart + r2.duration; t++) {
-				long t2 = t - r.timeStart;
-				if (t2 >= r.duration) break;
-				count[(int) t2]++;
+				long t2 = t - timeStart;
+				if (t2 >= duration) break;
+				count[(int) t2] += r2.num;
 			}
 		}
 
-		int max = 0;
-		for (int t = 0; t < r.duration; t++) {
+		double max = 0;
+		for (int t = 0; t < duration; t++) {
 			if (count[t] > max) {
 				max = count[t];
 			}
@@ -55,24 +55,23 @@ public class HumanExistRecordManager {
 	public double AverageNum(long timeStart, long duration) {
 		if (recordList.size() == 0) return 0;
 
-		HumanExistRecord r = new HumanExistRecord(timeStart, duration);
-		int length = (int) r.duration;
+		int length = (int) duration;
 		int[] count = new int[length];
 		for (HumanExistRecord r2 : recordList) {
-			long s = r.timeStart > r2.timeStart ? r.timeStart : r2.timeStart;
+			long s = timeStart > r2.timeStart ? timeStart : r2.timeStart;
 			for (long t = s; t < r2.timeStart + r2.duration; t++) {
-				long t2 = t - r.timeStart;
-				if (t2 >= r.duration) break;
-				count[(int) t2]++;
+				long t2 = t - timeStart;
+				if (t2 >= duration) break;
+				count[(int) t2] += r2.num;
 			}
 		}
 
 		double sum = 0;
-		for (int t = 0; t < r.duration; t++) {
+		for (int t = 0; t < duration; t++) {
 			sum += count[t];
 		}
 
-		double average = sum / r.duration;
+		double average = sum / duration;
 		return average;
 	}
 

@@ -25,9 +25,6 @@ public class FactoryRoom extends ShopRoom {
 
 		FactoryMaterialInfo factoryMaterialInfo;
 
-		// しかかり中の材料
-		double shikakarichu = 0;
-
 		public FactoryMaterialManager(FactoryMaterialInfo materialInfo) {
 			this.factoryMaterialInfo = materialInfo;
 		}
@@ -58,14 +55,13 @@ public class FactoryRoom extends ShopRoom {
 		public void Feedback(double price, double quantity) {
 			feedbackManager.Add(price, quantity);
 		}
-
 	}
 
 	public class FactoryProductManager {
 		FactoryProductInfo factoryProductInfo;
 
 		// しかかり中の製品
-		double shikakarichu = 0;
+		// double shikakarichu = 0;
 
 		// 製品をnumProductPerWork個作るのに必要な材料
 		TreeMap<ItemDef, FactoryMaterialManager> factoryMaterialManager = new TreeMap<ItemDef, FactoryMaterialManager>(new ItemDefComparator());
@@ -115,7 +111,6 @@ public class FactoryRoom extends ShopRoom {
 
 	public void DumpStatus(long timeNow) {
 		super.DumpStatus(timeNow);
-
 		System.out.println("===Factory Department===");
 		System.out.println("factory skillname : " + this.factoryProductManager.factoryMakerManager.factoryMakerInfo.skill.GetName());
 		System.out.println("product wage : " + this.factoryProductManager.factoryMakerManager.wage);
@@ -173,9 +168,9 @@ public class FactoryRoom extends ShopRoom {
 				FactoryMaterialManager materialManager = e.getValue();
 
 				StockManager materialStockManager = this.deliverStockManager.get(materialItemDef);
-				int numStock = materialStockManager.GetNumStock();
+				double numStock = materialStockManager.GetNumStock();
 
-				double numMakable = (numStock + materialManager.shikakarichu) / materialManager.factoryMaterialInfo.amount;
+				double numMakable = numStock / materialManager.factoryMaterialInfo.amount;
 
 				if (numMakable < numMakableMin) {
 					numMakableMin = numMakable;
@@ -184,8 +179,7 @@ public class FactoryRoom extends ShopRoom {
 
 			// 製品の在庫の上限を考慮する。
 			{
-				int space = shopStockManager.FindStockSpace();
-				double numMakable = space - factoryProductManager.shikakarichu;
+				double numMakable = shopStockManager.FindStockSpace();
 				if (numMakable < numMakableMin) {
 					numMakableMin = numMakable;
 				}
@@ -212,29 +206,15 @@ public class FactoryRoom extends ShopRoom {
 				ItemDef materialItemDef = e.getKey();
 				FactoryMaterialManager materialManager = e.getValue();
 				StockManager materialStockManager = this.deliverStockManager.get(materialItemDef);
-
-				int numStock = materialStockManager.GetNumStock();
-
 				double numUse = numMakableMin * materialManager.factoryMaterialInfo.amount;
-
-				double numRest = numStock + materialManager.shikakarichu - numUse;
-
-				int numRestInt = (int) numRest;
-
-				int numPick = numStock - numRestInt;
-
-				materialManager.shikakarichu = numRest - numRestInt;
-
-				materialStockManager.Get(timeNow, numPick, simulation);
+				materialStockManager.Get(timeNow, numUse, simulation);
 			}
 
 			// 製品を増やす。
 			{
-				double numCreate = numMakableMin + factoryProductManager.shikakarichu;
-				int numCreateInt = (int) numCreate;
-				factoryProductManager.shikakarichu = numCreate - numCreateInt;
-				if (numCreateInt > 0) {
-					Item itemProduct = new Item(cfm.itemDef, numCreateInt);
+				double numCreate = numMakableMin;
+				if (numCreate > 0) {
+					Item itemProduct = new Item(cfm.itemDef, numCreate);
 					shopStockManager.Put(timeNow, itemProduct, simulation);
 				}
 			}
@@ -247,7 +227,7 @@ public class FactoryRoom extends ShopRoom {
 		return result;
 	}
 
-	// 商品価格に対してフォードバックを与える。いくらだったらNo1の選択肢になったのか、各Humanがフィードバックを与える。
+	// 商品価格に対してフォードバックを与える。どのくらいの確率で選択されたか、各Humanがフィードバックを与える。
 	public void FeedbackAboutMakerPrice(CallForMaker cfm, double price, double quantity) {
 		this.factoryProductManager.factoryMakerManager.Feedback(price, quantity);
 	}
@@ -276,7 +256,7 @@ public class FactoryRoom extends ShopRoom {
 		}
 
 		double productStock = this.shopStockManager.GetNumStock();
-		double productCapacity = this.shopStockManager.GetCapacity() + this.factoryProductManager.shikakarichu;
+		double productCapacity = this.shopStockManager.GetCapacity();
 
 		{
 			double gainGlobal = -Double.MAX_VALUE;

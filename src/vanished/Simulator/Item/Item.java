@@ -4,13 +4,13 @@ public class Item extends Object {
 	ItemDef info;
 
 	// ƒAƒCƒeƒ€‚Ì—Ê
-	int quantity;
+	double quantity;
 
 	public Item(ItemDef itemDef) {
 		this.info = itemDef;
 	}
 
-	public Item(ItemDef itemDef, int quantity) {
+	public Item(ItemDef itemDef, double quantity) {
 		this.info = itemDef;
 		this.quantity = quantity;
 	}
@@ -24,11 +24,11 @@ public class Item extends Object {
 		return info;
 	}
 
-	public int GetQuantity() {
+	public double GetQuantity() {
 		return quantity;
 	}
 
-	public void SetQuantity(int q) {
+	public void SetQuantity(double q) {
 		this.quantity = q;
 	}
 

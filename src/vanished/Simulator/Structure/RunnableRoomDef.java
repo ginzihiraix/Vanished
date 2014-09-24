@@ -13,17 +13,17 @@ import vanished.Simulator.Skill.SkillComparator;
 public class RunnableRoomDef extends RoomDef {
 
 	// 稼動に必要な装備品のリスト
-	TreeMap<ItemDef, Integer> equipItemListForRun = new TreeMap<ItemDef, Integer>(new ItemDefComparator());
+	TreeMap<ItemDef, Double> equipItemListForRun = new TreeMap<ItemDef, Double>(new ItemDefComparator());
 
 	// 稼動に必要な人材のリスト
 	TreeMap<Skill, WorkerRequirement> workerRequirement = new TreeMap<Skill, WorkerRequirement>(new SkillComparator());
 
 	public class WorkerRequirement {
 		// 稼動するために必要な平均労働者数
-		int minAverageNumWorkerForRun;
+		double minAverageNumWorkerForRun;
 
 		// 稼動するために必要な労働者が働ける最大数
-		int workerCapacityForRun;
+		double workerCapacityForRun;
 
 		// 　標準効率を達成するために必要な労働者数
 		double numWorkerForStandardPerformance;
@@ -32,9 +32,9 @@ public class RunnableRoomDef extends RoomDef {
 		long durationForWork;
 
 		public WorkerRequirement(String prefix, Properties p) {
-			this.minAverageNumWorkerForRun = Integer.parseInt(p.getProperty(prefix + "minAverageNumWorkerForRun"));
+			this.minAverageNumWorkerForRun = Double.parseDouble(p.getProperty(prefix + "minAverageNumWorkerForRun"));
 			this.durationForWork = Long.parseLong(p.getProperty(prefix + "durationForWork"));
-			this.workerCapacityForRun = Integer.parseInt(p.getProperty(prefix + "workerCapacityForRun"));
+			this.workerCapacityForRun = Double.parseDouble(p.getProperty(prefix + "workerCapacityForRun"));
 			this.numWorkerForStandardPerformance = Double.parseDouble(p.getProperty(prefix + "numWorkerForStandardPerformance"));
 		}
 	}
@@ -51,7 +51,7 @@ public class RunnableRoomDef extends RoomDef {
 				String itemName = parts[2];
 				ItemDef itemDef = GlobalParameter.dm.GetItemDef(itemName);
 
-				int num = Integer.parseInt(value);
+				double num = Double.parseDouble(value);
 
 				equipItemListForRun.put(itemDef, num);
 			}

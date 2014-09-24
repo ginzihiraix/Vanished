@@ -6,7 +6,7 @@ public class RoomDef {
 	String name;
 
 	// 部屋に入れる人のキャパシティ
-	int capacityHuman;
+	double capacityHuman;
 
 	// 部屋に格納できるアイテムのキャパシティ
 	double capacityItemWeight;
@@ -14,7 +14,7 @@ public class RoomDef {
 	public RoomDef(String name, Properties p) {
 		this.name = name;
 
-		this.capacityHuman = Integer.parseInt(p.getProperty("all.capacityHuman"));
+		this.capacityHuman = Double.parseDouble(p.getProperty("all.capacityHuman"));
 
 		this.capacityItemWeight = Double.parseDouble(p.getProperty("all.capacityItemWeight"));
 

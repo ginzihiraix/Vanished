@@ -27,7 +27,10 @@ public class Building {
 	// ï˚äpÅB{0,1,2,3} = {N,E,S,W}
 	int direction = 0;
 
-	public Building(long timeNow, BuildingDef buildingDef, Location location, int direction) throws Exception {
+	// Real/VirtualÉtÉâÉO
+	boolean realFlag = false;
+
+	public Building(long timeNow, BuildingDef buildingDef, Location location, int direction, boolean realFlag) throws Exception {
 		this.buildingDef = buildingDef;
 
 		buildRoom = new FactoryRoom(this, buildingDef.buildRoomDef, true);
@@ -46,6 +49,8 @@ public class Building {
 
 		this.location = location;
 		this.direction = direction;
+
+		this.realFlag = realFlag;
 	}
 
 	public Rect GetLocation() {

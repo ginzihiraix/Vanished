@@ -59,7 +59,7 @@ public class Inventory {
 			storage.put(itemDef, item2);
 		}
 
-		int q = item2.GetQuantity() + item.GetQuantity();
+		double q = item2.GetQuantity() + item.GetQuantity();
 		item2.SetQuantity(q);
 	}
 
@@ -70,22 +70,16 @@ public class Inventory {
 		if (weightTotal + weight > capacity) throw new HumanSimulationException("Inventry : weightTotal > capacity");
 	}
 
-	public int FindSpace(ItemDef itemDef) {
+	public double FindSpace(ItemDef itemDef) {
 		double space = (this.capacity - this.weightTotal) / itemDef.GetWeight();
-		return (int) space;
+		return space;
 	}
 
-	// public void Put(ArrayList<Item> items) throws HumanSimulationException {
-	// for (Item item : items) {
-	// Put(item);
-	// }
-	// }
-
-	public Item Get(ItemDef itemDef, int numPick) throws HumanSimulationException {
+	public Item Get(ItemDef itemDef, double numPick) throws HumanSimulationException {
 		Item item = storage.get(itemDef);
 		if (item == null) return new Item(itemDef);
 
-		int numStock = item.GetQuantity();
+		double numStock = item.GetQuantity();
 		if (numStock < numPick) throw new HumanSimulationException("Inventory : numStock < numPick");
 
 		numStock -= numPick;
@@ -101,17 +95,17 @@ public class Inventory {
 		return ret;
 	}
 
-	public Item Peek(ItemDef itemDef, int numPick) throws HumanSimulationException {
+	public Item Peek(ItemDef itemDef, double numPick) throws HumanSimulationException {
 		Item item = storage.get(itemDef);
 		if (item == null) return new Item(itemDef);
 
-		int numStock = item.GetQuantity();
+		double numStock = item.GetQuantity();
 		if (numStock < numPick) throw new HumanSimulationException("Inventory : numStock < numPick");
 
 		return new Item(itemDef, numPick);
 	}
 
-	public int GetNumStock(ItemDef itemDef) {
+	public double GetNumStock(ItemDef itemDef) {
 		Item item = storage.get(itemDef);
 		if (item == null) return 0;
 		return item.GetQuantity();
