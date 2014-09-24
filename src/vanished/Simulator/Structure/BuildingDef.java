@@ -16,6 +16,13 @@ public class BuildingDef extends ObjectDef {
 	// 各Roomの定義
 	ArrayList<RoomDef> roomdefList = new ArrayList<RoomDef>();
 
+	// サイズ
+	int width;
+	int height;
+
+	// 道路と接することができる方向
+	boolean[] open = new boolean[4];
+
 	public BuildingDef(String name, Properties p) throws Exception {
 		this.name = name;
 
@@ -29,6 +36,33 @@ public class BuildingDef extends ObjectDef {
 			RoomDef roomDef = GlobalParameter.dm.GetRoomDef(roomname);
 			for (int i = 0; i < num; i++) {
 				roomdefList.add(roomDef);
+			}
+		}
+
+		// サイズ
+		{
+			String temp = p.getProperty("size");
+			temp = temp.replace("(", "").replace(")", "");
+			String[] part = temp.split(",");
+
+			width = Integer.parseInt(part[0]);
+			height = Integer.parseInt(part[0]);
+		}
+
+		// 道路と接しているかのフラグ。
+		{
+			String temp = p.getProperty("open");
+			String[] part = temp.split(",");
+			for (String f : part) {
+				if (f.equals("N")) {
+					open[0] = true;
+				} else if (f.equals("E")) {
+					open[1] = true;
+				} else if (f.equals("S")) {
+					open[2] = true;
+				} else if (f.equals("W")) {
+					open[3] = true;
+				}
 			}
 		}
 	}

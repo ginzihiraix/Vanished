@@ -17,7 +17,12 @@ import vanished.Simulator.Structure.ShopRoom;
 import vanished.Simulator.Structure.ShopRoom.ItemCatalog;
 
 public class MapManager {
+	int worldSize = 16;
 	ArrayList<Building> buildingList = new ArrayList<Building>();
+
+	public int GetWorldSize() {
+		return worldSize;
+	}
 
 	public boolean CreateBuilding(Building building) {
 		buildingList.add(building);
@@ -30,6 +35,16 @@ public class MapManager {
 
 	public long GetTravelTime(MoveMethod moveMethod, Room r1, Room r2) {
 		return GetTravelTime(moveMethod, r1.GetParentBuilding(), r2.GetParentBuilding());
+	}
+
+	public ArrayList<Building> GetBuildingList(int left, int right, int bottom, int top) {
+		ArrayList<Building> ret = new ArrayList<Building>();
+		for (Building building : buildingList) {
+			Rect rect = building.OccupiedVoxel();
+			if (rect.right < left || rect.left >= right || rect.top < bottom || rect.bottom >= top) continue;
+			ret.add(building);
+		}
+		return ret;
 	}
 
 	public ArrayList<ShopRoom> GetConsumableRoomList(MoveMethod moveMethod, long maxTravelTime, double maxMoney, long timeStart, Room currentRoom) {
