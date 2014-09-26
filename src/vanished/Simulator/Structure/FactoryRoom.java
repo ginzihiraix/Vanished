@@ -60,9 +60,6 @@ public class FactoryRoom extends ShopRoom {
 	public class FactoryProductManager {
 		FactoryProductInfo factoryProductInfo;
 
-		// しかかり中の製品
-		// double shikakarichu = 0;
-
 		// 製品をnumProductPerWork個作るのに必要な材料
 		TreeMap<ItemDef, FactoryMaterialManager> factoryMaterialManager = new TreeMap<ItemDef, FactoryMaterialManager>(new ItemDefComparator());
 
@@ -119,43 +116,23 @@ public class FactoryRoom extends ShopRoom {
 	public class CallForMaker {
 		public ItemDef itemDef;
 		public Skill skill;
-		public double wage;
+		public double wageForFullWork;
+		public double numMake;
 		public long duration;
+		public double gain;
 
-		public CallForMaker(ItemDef itemDef, Skill skill, double wage, long duration) {
+		public CallForMaker(ItemDef itemDef, Skill skill, double wageForFullWork, double numMake, long duration, double gain) {
 			this.itemDef = itemDef;
 			this.skill = skill;
-			this.wage = wage;
+			this.wageForFullWork = wageForFullWork;
+			this.numMake = numMake;
 			this.duration = duration;
+			this.gain = gain;
 		}
 	}
 
 	// 欲しい人材リストを返す。
 	public CallForMaker GetDesiredMaker() {
-		double wage = this.factoryProductManager.factoryMakerManager.wage * Math.pow(1.02, OtherUtility.rand.nextInt(11) - 11 / 2);
-		CallForMaker cfw = new CallForMaker(this.factoryProductManager.factoryProductInfo.itemDef,
-				this.factoryProductManager.factoryMakerManager.factoryMakerInfo.skill, wage,
-				this.factoryProductManager.factoryMakerManager.factoryMakerInfo.durationForMake);
-		return cfw;
-	}
-
-	// 労働時間を返す。
-	public long GetDurationForWork() {
-		return this.factoryProductManager.factoryMakerManager.factoryMakerInfo.durationForMake;
-	}
-
-	public class MakeResult {
-		public double gain;
-		public long duration;
-
-		public MakeResult(double gain, long duration) {
-			this.gain = gain;
-			this.duration = duration;
-		}
-	}
-
-	// 作業してアイテムを作る。
-	public MakeResult Make(CallForMaker cfm, long timeNow, boolean simulation) throws HumanSimulationException {
 
 		// 作るアイテムの個数を調べる。
 		double numMakableMin;
@@ -185,20 +162,89 @@ public class FactoryRoom extends ShopRoom {
 				}
 			}
 
-			if (numMakableMin <= 0) throw new HumanSimulationException("FactoryRoom.Make : Couldn't make the product because of lack of stock");
+			if (numMakableMin == 0) return null;
 		}
+
+		double wageForFullWork = this.factoryProductManager.factoryMakerManager.wage * Math.pow(1.02, OtherUtility.rand.nextInt(11) - 11 / 2);
+
+		long duration = 1L + (long) (numMakableMin / this.factoryProductManager.factoryMakerManager.factoryMakerInfo.numProductPerMake * this.factoryProductManager.factoryMakerManager.factoryMakerInfo.durationForMake);
+
+		double gain = wageForFullWork * numMakableMin / this.factoryProductManager.factoryMakerManager.factoryMakerInfo.numProductPerMake;
+
+		CallForMaker cfw = new CallForMaker(this.factoryProductManager.factoryProductInfo.itemDef,
+				this.factoryProductManager.factoryMakerManager.factoryMakerInfo.skill, wageForFullWork, numMakableMin, duration, gain);
+		return cfw;
+	}
+
+	// 労働時間を返す。
+	public long GetDurationForWork() {
+		return this.factoryProductManager.factoryMakerManager.factoryMakerInfo.durationForMake;
+	}
+
+	public class MakeResult {
+		public double gain;
+		public long duration;
+
+		public MakeResult(double gain, long duration) {
+			this.gain = gain;
+			this.duration = duration;
+		}
+	}
+
+	// 作業してアイテムを作る。
+	public void Make(CallForMaker cfm, long timeNow, boolean simulation) throws HumanSimulationException {
+
+		// 作るアイテムの個数を調べる。
+		// double numMakableMin;
+		// {
+		// numMakableMin = this.factoryProductManager.factoryMakerManager.factoryMakerInfo.numProductPerMake * cfm.duration
+		// / this.factoryProductManager.factoryMakerManager.factoryMakerInfo.durationForMake * prob;
+		// }
+
+		// {
+		// numMakableMin = this.factoryProductManager.factoryMakerManager.factoryMakerInfo.numProductPerMake * prob;
+		//
+		// // 材料の在庫による制約を考慮する。
+		// for (Entry<ItemDef, FactoryMaterialManager> e : factoryProductManager.factoryMaterialManager.entrySet()) {
+		// ItemDef materialItemDef = e.getKey();
+		// FactoryMaterialManager materialManager = e.getValue();
+		//
+		// StockManager materialStockManager = this.deliverStockManager.get(materialItemDef);
+		// double numStock = materialStockManager.GetNumStock();
+		//
+		// double numMakable = numStock / materialManager.factoryMaterialInfo.amount;
+		//
+		// if (numMakable < numMakableMin) {
+		// numMakableMin = numMakable;
+		// }
+		// }
+		//
+		// // 製品の在庫の上限を考慮する。
+		// {
+		// double numMakable = shopStockManager.FindStockSpace();
+		// if (numMakable < numMakableMin) {
+		// numMakableMin = numMakable;
+		// }
+		//
+		// // TODO
+		// System.out.println(this.roomDef.name + ", " + this.IsReal() + ", " + numMakable);
+		// }
+		//
+		// if (numMakableMin <= 0) { throw new HumanSimulationException("FactoryRoom.Make : Couldn't make the product because of lack of stock"); }
+		// }
 
 		// 賃金と労働時間を求める。個数割り。
-		MakeResult result;
-		{
-			double gain = numMakableMin / this.factoryProductManager.factoryMakerManager.factoryMakerInfo.numProductPerMake * cfm.wage;
-			long duration = (long) (numMakableMin / this.factoryProductManager.factoryMakerManager.factoryMakerInfo.numProductPerMake * this.factoryProductManager.factoryMakerManager.factoryMakerInfo.durationForMake);
-			if (duration == 0) throw new HumanSimulationException("FactoryRoom.Make : duration = 0");
-			result = new MakeResult(gain, duration);
-		}
+		// MakeResult result;
+		// {
+		// double gain = numMakableMin / this.factoryProductManager.factoryMakerManager.factoryMakerInfo.numProductPerMake * cfm.wage;
+		// long duration = (long) (numMakableMin / this.factoryProductManager.factoryMakerManager.factoryMakerInfo.numProductPerMake *
+		// this.factoryProductManager.factoryMakerManager.factoryMakerInfo.durationForMake);
+		// if (duration == 0) throw new HumanSimulationException("FactoryRoom.Make : duration = 0");
+		// result = new MakeResult(gain, duration);
+		// }
 
 		// Workerに挨拶する。
-		this.Greeting(timeNow, result.duration, simulation);
+		this.Greeting(timeNow, cfm.duration, simulation);
 
 		if (simulation == false) {
 			// 材料を減らす。
@@ -206,25 +252,19 @@ public class FactoryRoom extends ShopRoom {
 				ItemDef materialItemDef = e.getKey();
 				FactoryMaterialManager materialManager = e.getValue();
 				StockManager materialStockManager = this.deliverStockManager.get(materialItemDef);
-				double numUse = numMakableMin * materialManager.factoryMaterialInfo.amount;
+				double numUse = cfm.numMake * materialManager.factoryMaterialInfo.amount;
 				materialStockManager.Get(timeNow, numUse, simulation);
 			}
 
 			// 製品を増やす。
 			{
-				double numCreate = numMakableMin;
-				if (numCreate > 0) {
-					Item itemProduct = new Item(cfm.itemDef, numCreate);
-					shopStockManager.Put(timeNow, itemProduct, simulation);
-				}
+				Item itemProduct = new Item(cfm.itemDef, cfm.numMake);
+				shopStockManager.Put(timeNow, itemProduct, simulation);
 			}
 
 			// 賃金を払う。
-			this.AddMoney(timeNow, -result.gain);
-		} else {
+			this.AddMoney(timeNow, -cfm.gain);
 		}
-
-		return result;
 	}
 
 	// 商品価格に対してフォードバックを与える。どのくらいの確率で選択されたか、各Humanがフィードバックを与える。
@@ -250,7 +290,7 @@ public class FactoryRoom extends ShopRoom {
 		// 何日後に完成を目指すかは、どこかで設定できるようにすべき。
 		long durationFutureTarget;
 		if (this.forBuilding == true) {
-			durationFutureTarget = 60L * 24L * 30;
+			durationFutureTarget = 60L * 24L * 30L;
 		} else {
 			durationFutureTarget = 60L * 24L * 365L * 10L * 1000L;
 		}
@@ -418,7 +458,6 @@ public class FactoryRoom extends ShopRoom {
 					this.factoryProductManager.factoryMakerManager.wage = feedbackMakerGlobal.price;
 				}
 			}
-			System.out.println(gainGlobal);
 		}
 
 		if (true) {

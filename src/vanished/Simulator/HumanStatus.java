@@ -11,7 +11,6 @@ import vanished.Simulator.Structure.DeliverRoom;
 import vanished.Simulator.Structure.DeliverRoom.CallForItem;
 import vanished.Simulator.Structure.FactoryRoom;
 import vanished.Simulator.Structure.FactoryRoom.CallForMaker;
-import vanished.Simulator.Structure.FactoryRoom.MakeResult;
 import vanished.Simulator.Structure.Room;
 import vanished.Simulator.Structure.RunnableRoom;
 import vanished.Simulator.Structure.RunnableRoom.CallForWorker;
@@ -65,7 +64,7 @@ public class HumanStatus {
 		timeBecomeAdult = timeNow;
 		totalTimeWork = 0;
 
-		// TODO
+		// TODO:とりあえずご飯を食う。
 		{
 			for (int i = 0; i < 10; i++) {
 				ItemDef fish = GlobalParameter.dm.GetItemDef("fish");
@@ -277,12 +276,11 @@ public class HumanStatus {
 	}
 
 	public void DoTrader(TraderWorkResult res) throws Exception {
-		System.out.println(String.format("DoTrader : Bought %d %s with $%f at %s, and sold it with $%f to %s.", res.numPick, res.itemDef.GetName(),
+		System.out.println(String.format("DoTrader : Bought %f %s with $%f at %s, and sold it with $%f to %s.", res.numPick, res.itemDef.GetName(),
 				res.itemCatalog.price, res.shopRoom.GetName(), res.callForItem.price, res.deliverRoom.GetName()));
 
 		double moneyStart = this.money;
 		long timeStart = this.timeSimulationComplete;
-		double utilStart = this.ComputeUtility();
 
 		this.Move(res.shopRoom);
 
@@ -294,10 +292,12 @@ public class HumanStatus {
 
 		double moneyEnd = this.money;
 		long timeEnd = this.timeSimulationComplete;
-		double utilEnd = this.ComputeUtility();
 
-		this.wageMovingAverage.Add(this.timeSimulationComplete, moneyEnd - moneyStart);
-		this.totalTimeWork += this.timeSimulationComplete - timeStart;
+		double gain = moneyEnd - moneyStart;
+		double duration = timeEnd - timeStart;
+
+		this.wageMovingAverage.Add(this.timeSimulationComplete, gain);
+		this.totalTimeWork += duration;
 	}
 
 	// //////////////////////////////////////////////////////////
@@ -353,6 +353,7 @@ public class HumanStatus {
 		CallForMaker cfm = null;
 		{
 			cfm = factoryRoom.GetDesiredMaker();
+			if (cfm == null) throw new HumanSimulationException("TryMaker : There are no skill position in the selected factory.");
 			// 自分のスキルで実行可能か調べる。
 			if (myskill.hasAbility(cfm.skill) == false) throw new HumanSimulationException(
 					"TryMaker : There are no skill position in the selected factory.");
@@ -377,11 +378,11 @@ public class HumanStatus {
 	}
 
 	public void DoMaker(MakerWorkResult res) throws Exception {
-		System.out.println(String.format("DoMaker : Made %s with $%f at %s", res.cfm.itemDef.GetName(), res.cfm.wage, res.factoryRoom.GetName()));
+		System.out.println(String.format("DoMaker : %sで仕事した。%sを%f個・賃金%f・時間%dで作った。", res.factoryRoom.GetName(), res.cfm.itemDef.GetName(),
+				res.cfm.numMake, res.cfm.gain, res.cfm.duration));
 
 		double moneyStart = this.money;
 		long timeStart = this.timeSimulationComplete;
-		double utilStart = this.ComputeUtility();
 
 		this.Move(res.factoryRoom);
 
@@ -389,10 +390,12 @@ public class HumanStatus {
 
 		double moneyEnd = this.money;
 		long timeEnd = this.timeSimulationComplete;
-		double utilEnd = this.ComputeUtility();
 
-		this.wageMovingAverage.Add(this.timeSimulationComplete, moneyEnd - moneyStart);
-		this.totalTimeWork += this.timeSimulationComplete - timeStart;
+		double gain = moneyEnd - moneyStart;
+		double duration = timeEnd - timeStart;
+
+		this.wageMovingAverage.Add(this.timeSimulationComplete, gain);
+		this.totalTimeWork += duration;
 	}
 
 	// //////////////////////////////////////////////////////////
@@ -472,6 +475,8 @@ public class HumanStatus {
 	}
 
 	public ConsumeResult TryConsume() throws Exception {
+		// System.out.println("TryConsume");
+
 		// 食べる場所を決定する。
 		ShopRoom consumeRoom;
 		if (true) {
@@ -587,11 +592,9 @@ public class HumanStatus {
 		RunnableRoom runnableRoom = (RunnableRoom) this.currentRoom;
 
 		WorkResult result = runnableRoom.Work(cfw.GetSkill(), this.timeSimulationComplete, simulation);
-		long timeDelta = result.duration;
 
 		money += result.gain;
-
-		timeSimulationComplete += timeDelta;
+		timeSimulationComplete += result.duration;
 
 		this.utilityMovingAverage.Add(this.timeSimulationComplete, this.ComputeUtility());
 	}
@@ -599,12 +602,10 @@ public class HumanStatus {
 	public void Make(CallForMaker cfm, boolean simulation) throws Exception {
 		FactoryRoom factoryRoom = (FactoryRoom) this.currentRoom;
 
-		MakeResult result = factoryRoom.Make(cfm, this.timeSimulationComplete, simulation);
-		long timeDelta = result.duration;
+		factoryRoom.Make(cfm, this.timeSimulationComplete, simulation);
 
-		money += result.gain;
-
-		timeSimulationComplete += timeDelta;
+		money += cfm.gain;
+		timeSimulationComplete += cfm.duration;
 
 		this.utilityMovingAverage.Add(this.timeSimulationComplete, this.ComputeUtility());
 	}

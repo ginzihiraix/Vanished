@@ -24,7 +24,7 @@ public class WorkerManager {
 	// ˜J“­ŽÒ‚ª•”‰®‚É“ü‚ê‚é‚©’²‚×‚éB
 	public boolean IsEnterableAsWorker(WorkerRequirement wc, long timeStart, long duration) {
 		double numMaxWorker = this.workerExistRecordManager.MaxNum(timeStart, duration);
-		if (numMaxWorker + 1 >= wc.workerCapacityForRun) return false;
+		if (numMaxWorker + 1 > wc.workerCapacityForRun) return false;
 		return true;
 	}
 

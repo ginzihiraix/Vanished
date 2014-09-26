@@ -9,6 +9,7 @@ import vanished.Simulator.HumanStatus.MakerWorkResult;
 import vanished.Simulator.HumanStatus.NopResult;
 import vanished.Simulator.HumanStatus.TraderWorkResult;
 import vanished.Simulator.HumanStatus.TryResult;
+import vanished.Simulator.Item.Item;
 import vanished.Simulator.Structure.Room;
 
 public class Human {
@@ -158,7 +159,6 @@ public class Human {
 						ress.add(res);
 					}
 				} else if (res instanceof NopResult) {
-					NopResult result = (NopResult) res;
 				}
 			}
 		}
@@ -188,6 +188,7 @@ public class Human {
 			this.ExecuteAction(workResults2, consumeResults2, virtualRoomTarget);
 		}
 
+		// 行動候補からランダムにひとつを選択して、実行する。
 		this.ExecuteAction(workResults, consumeResults, null);
 	}
 
@@ -274,96 +275,163 @@ public class Human {
 			}
 		}
 
-		// //////////////////////////////////////////////
-		// weightでランダムにアクションを選択して実行する。
-		// //////////////////////////////////////////////
-		if (workWeightTotal > 0) {
-			TryResult resSelected = null;
-			double r = OtherUtility.rand.nextDouble();
-			double sum = 0;
-			for (int i = 0; i < numWorkResults; i++) {
-				sum += workWeights[i];
-				if (r < sum / workWeightTotal) {
-					resSelected = workResults.get(i);
-					break;
-				}
-			}
+		if (virtualRoomTarget == null) {
+			// //////////////////////////////////////////////
+			// weightでランダムにアクションを選択して実行する。
+			// //////////////////////////////////////////////
+			if (workWeightTotal > 0) {
+				TryResult resSelected = ChooseRandomly(workWeightTotal, workWeights, workResults);
 
-			if (resSelected instanceof TraderWorkResult) {
-				TraderWorkResult result = (TraderWorkResult) resSelected;
-				if (virtualRoomTarget == null) {
+				if (resSelected instanceof TraderWorkResult) {
+					TraderWorkResult result = (TraderWorkResult) resSelected;
 					humanStatus.DoTrader(result);
+				} else if (resSelected instanceof MakerWorkResult) {
+					MakerWorkResult result = (MakerWorkResult) resSelected;
+					humanStatus.DoMaker(result);
 				} else {
-					// TODO:仮想建物の仮想シミュレーションについて、どうにかする。
-					// if (result.deliverRoom == virtualRoomTarget) {
-					// result.deliverRoom.SellItemVirtual(timeNow, item, price, simulation)
-					//
-					// } else if (result.shopRoom == virtualRoomTarget) {
-					//
-					// }
+					throw new Exception("fatal error");
 				}
-			} else if (resSelected instanceof MakerWorkResult) {
-				MakerWorkResult result = (MakerWorkResult) resSelected;
-				humanStatus.DoMaker(result);
+			} else if (consumeWeightTotal > 0) {
+				TryResult resSelected = ChooseRandomly(consumeWeightTotal, consumeWeights, consumeResults);
+
+				if (resSelected instanceof NopResult) {
+					humanStatus.DoNop();
+				} else if (resSelected instanceof ConsumeResult) {
+					ConsumeResult result = (ConsumeResult) resSelected;
+					humanStatus.DoConsume(result);
+				}
 			} else {
-				throw new Exception("fatal error");
-			}
-		} else if (consumeWeightTotal > 0) {
-			TryResult resSelected = null;
-			double r = OtherUtility.rand.nextDouble();
-			double sum = 0;
-			for (int i = 0; i < numConsumeResults; i++) {
-				sum += consumeWeights[i];
-				if (r < sum / consumeWeightTotal) {
-					resSelected = consumeResults.get(i);
-					break;
-				}
+				humanStatus.DoNop();
 			}
 
-			if (resSelected instanceof NopResult) {
-				humanStatus.DoNop();
-			} else if (resSelected instanceof ConsumeResult) {
-				ConsumeResult result = (ConsumeResult) resSelected;
-				humanStatus.DoConsume(result);
+			// //////////////////////////////////////////////
+			// 期待値をFeedbackする。
+			// //////////////////////////////////////////////
+			{
+				if (workWeightTotal > 0) {
+					for (int i = 0; i < numWorkResults; i++) {
+						TryResult resSelected = workResults.get(i);
+						double prob = 0;
+						if (workWeightTotal > 0) {
+							prob = workWeights[i] / workWeightTotal;
+						}
+						if (resSelected instanceof TraderWorkResult) {
+							TraderWorkResult result = (TraderWorkResult) resSelected;
+							result.deliverRoom.FeedbackAboutDeliverPrice(result.itemDef, result.callForItem.price, prob * result.numPick);
+							result.shopRoom.FeedbackAboutProductPrice(result.itemCatalog.price, prob * result.numPick);
+						} else if (resSelected instanceof MakerWorkResult) {
+							MakerWorkResult result = (MakerWorkResult) resSelected;
+							result.factoryRoom.FeedbackAboutMakerPrice(result.cfm, result.cfm.wageForFullWork, 1.0 * prob);
+						}
+					}
+				} else if (consumeWeightTotal > 0) {
+					for (int i = 0; i < numConsumeResults; i++) {
+						TryResult resSelected = consumeResults.get(i);
+						double prob = consumeWeights[i] / consumeWeightTotal;
+						if (resSelected instanceof NopResult) {
+						} else if (resSelected instanceof ConsumeResult) {
+							ConsumeResult result = (ConsumeResult) resSelected;
+							result.shopRoom.FeedbackAboutProductPrice(result.itemCatalog.price, 1.0 * prob);
+						}
+					}
+				}
 			}
 		} else {
-			humanStatus.DoNop();
-		}
-
-		// //////////////////////////////////////////////
-		// 期待値をFeedbackする。
-		// //////////////////////////////////////////////
-		{
+			// //////////////////////////////////////////////
+			// weightでランダムにアクションを選択して実行する。仮想部屋に対してのみ。
+			// //////////////////////////////////////////////
 			if (workWeightTotal > 0) {
-				for (int i = 0; i < numWorkResults; i++) {
-					TryResult resSelected = workResults.get(i);
-					double prob = 0;
-					if (workWeightTotal > 0) {
-						prob = workWeights[i] / workWeightTotal;
-					}
+				{
+					TryResult resSelected = ChooseRandomly(workWeightTotal, workWeights, workResults);
+
 					if (resSelected instanceof TraderWorkResult) {
 						TraderWorkResult result = (TraderWorkResult) resSelected;
-						result.deliverRoom.FeedbackAboutDeliverPrice(result.itemDef, result.callForItem.price, prob * result.numPick);
-						result.shopRoom.FeedbackAboutProductPrice(result.itemCatalog.price, prob * result.numPick);
+						if (result.deliverRoom == virtualRoomTarget) {
+							Item item = new Item(result.itemDef, result.numPick);
+							result.deliverRoom.SellItem(humanStatus.timeSimulationComplete, item, result.callForItem.price, false);
+						}
+						if (result.shopRoom == virtualRoomTarget) {
+							result.shopRoom.BuyProductItem(humanStatus.timeSimulationComplete, result.itemCatalog.price, result.itemCatalog,
+									result.numPick, true);
+						}
 					} else if (resSelected instanceof MakerWorkResult) {
 						MakerWorkResult result = (MakerWorkResult) resSelected;
-						result.factoryRoom.FeedbackAboutMakerPrice(result.cfm, result.cfm.wage, 1.0 * prob);
+						if (result.factoryRoom == virtualRoomTarget) {
+							result.factoryRoom.Make(result.cfm, humanStatus.timeSimulationComplete, false);
+						}
 					}
 				}
 			} else if (consumeWeightTotal > 0) {
-				for (int i = 0; i < numConsumeResults; i++) {
-					TryResult resSelected = consumeResults.get(i);
-					double prob = consumeWeights[i] / consumeWeightTotal;
+				{
+					TryResult resSelected = ChooseRandomly(consumeWeightTotal, consumeWeights, consumeResults);
+
 					if (resSelected instanceof NopResult) {
 					} else if (resSelected instanceof ConsumeResult) {
 						ConsumeResult result = (ConsumeResult) resSelected;
-						result.shopRoom.FeedbackAboutProductPrice(result.itemCatalog.price, 1.0 * prob);
+						if (result.shopRoom == virtualRoomTarget) {
+							result.shopRoom.BuyProductItem(humanStatus.timeSimulationComplete, result.itemCatalog.price, result.itemCatalog, 1, true);
+						}
 					}
 				}
-			} else {
-				// do nothing
+			}
+
+			// //////////////////////////////////////////////
+			// 期待値をFeedbackする。仮想部屋に対してのみ。
+			// //////////////////////////////////////////////
+			{
+				if (workWeightTotal > 0) {
+					for (int i = 0; i < numWorkResults; i++) {
+						TryResult resSelected = workResults.get(i);
+						double prob = 0;
+						if (workWeightTotal > 0) {
+							prob = workWeights[i] / workWeightTotal;
+						}
+						if (resSelected instanceof TraderWorkResult) {
+							TraderWorkResult result = (TraderWorkResult) resSelected;
+							if (result.deliverRoom == virtualRoomTarget) {
+								result.deliverRoom.FeedbackAboutDeliverPrice(result.itemDef, result.callForItem.price, prob * result.numPick);
+							}
+							if (result.shopRoom == virtualRoomTarget) {
+								result.shopRoom.FeedbackAboutProductPrice(result.itemCatalog.price, prob * result.numPick);
+							}
+						} else if (resSelected instanceof MakerWorkResult) {
+							MakerWorkResult result = (MakerWorkResult) resSelected;
+							if (result.factoryRoom == virtualRoomTarget) {
+								result.factoryRoom.FeedbackAboutMakerPrice(result.cfm, result.cfm.wageForFullWork, 1.0 * prob);
+							}
+						}
+					}
+				} else if (consumeWeightTotal > 0) {
+					for (int i = 0; i < numConsumeResults; i++) {
+						TryResult resSelected = consumeResults.get(i);
+						double prob = consumeWeights[i] / consumeWeightTotal;
+						if (resSelected instanceof NopResult) {
+						} else if (resSelected instanceof ConsumeResult) {
+							ConsumeResult result = (ConsumeResult) resSelected;
+							if (result.shopRoom == virtualRoomTarget) {
+								result.shopRoom.FeedbackAboutProductPrice(result.itemCatalog.price, 1.0 * prob);
+							}
+						}
+					}
+				}
+			}
+
+		}
+	}
+
+	private TryResult ChooseRandomly(double weightTotal, double[] weight, ArrayList<TryResult> results) {
+		TryResult resSelected = null;
+		int num = results.size();
+		double r = OtherUtility.rand.nextDouble();
+		double sum = 0;
+		for (int i = 0; i < num; i++) {
+			sum += weight[i];
+			if (r < sum / weightTotal) {
+				resSelected = results.get(i);
+				break;
 			}
 		}
+		return resSelected;
 	}
 
 	private void ExecuteAction(ArrayList<TryResult> workResults, ArrayList<TryResult> consumeResults, ArrayList<TryResult> workResultsVirtual,
@@ -711,7 +779,7 @@ public class Human {
 						result.shopRoom.FeedbackAboutProductPrice(result.itemCatalog.price, prob * result.numPick);
 					} else if (resSelected instanceof MakerWorkResult) {
 						MakerWorkResult result = (MakerWorkResult) resSelected;
-						result.factoryRoom.FeedbackAboutMakerPrice(result.cfm, result.cfm.wage, 1.0 * prob);
+						result.factoryRoom.FeedbackAboutMakerPrice(result.cfm, result.cfm.wageForFullWork, 1.0 * prob);
 					}
 				}
 			} else if (consumeWeightTotal > 0) {
@@ -725,7 +793,6 @@ public class Human {
 					}
 				}
 			} else {
-				// do nothing
 			}
 		}
 

@@ -56,7 +56,7 @@ public class Room {
 	private boolean IsEnterable(long timeStart, long duration) {
 		// •”‰®‚É“ü‚ê‚é‚©‚Ç‚¤‚©’²‚×‚éB
 		double num = humanExistRoomManager.MaxNum(timeStart, duration);
-		if (num + 1 >= roomDef.capacityHuman) return false;
+		if (num + 1 > roomDef.capacityHuman) return false;
 		return true;
 	}
 
