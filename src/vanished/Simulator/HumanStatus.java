@@ -12,9 +12,6 @@ import vanished.Simulator.Structure.DeliverRoom.CallForItem;
 import vanished.Simulator.Structure.FactoryRoom;
 import vanished.Simulator.Structure.FactoryRoom.CallForMaker;
 import vanished.Simulator.Structure.Room;
-import vanished.Simulator.Structure.RunnableRoom;
-import vanished.Simulator.Structure.RunnableRoom.CallForWorker;
-import vanished.Simulator.Structure.RunnableRoom.WorkResult;
 import vanished.Simulator.Structure.ShopRoom;
 import vanished.Simulator.Structure.ShopRoom.ItemCatalog;
 
@@ -584,17 +581,6 @@ public class HumanStatus {
 		money += price * item.GetQuantity();
 
 		timeSimulationComplete += timeDelta;
-
-		this.utilityMovingAverage.Add(this.timeSimulationComplete, this.ComputeUtility());
-	}
-
-	public void Work(CallForWorker cfw, boolean simulation) throws Exception {
-		RunnableRoom runnableRoom = (RunnableRoom) this.currentRoom;
-
-		WorkResult result = runnableRoom.Work(cfw.GetSkill(), this.timeSimulationComplete, simulation);
-
-		money += result.gain;
-		timeSimulationComplete += result.duration;
 
 		this.utilityMovingAverage.Add(this.timeSimulationComplete, this.ComputeUtility());
 	}

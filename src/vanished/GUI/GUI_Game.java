@@ -17,6 +17,7 @@ import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferByte;
 import java.io.File;
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
 
 import javax.imageio.ImageIO;
 import javax.media.opengl.GL2;
@@ -26,6 +27,7 @@ import javax.media.opengl.awt.GLCanvas;
 
 import vanished.Simulator.HumanManager;
 import vanished.Simulator.MapManager;
+import vanished.Simulator.Structure.Building;
 
 import com.jogamp.opengl.util.Animator;
 
@@ -34,11 +36,18 @@ public class GUI_Game implements GLEventListener, KeyListener, MouseListener, Mo
 	int width = 800;
 	int height = 600;
 
-	LightSetting lightGlobal;
-	Camera camera = new Camera();
+	MapManager mm;
+	HumanManager hm;
+
 	GraphicManager gm;
 
+	LightSetting lightGlobal;
+	Camera camera = new Camera();
+
 	public GUI_Game(MapManager mm, HumanManager hm) {
+		this.mm = mm;
+		this.hm = hm;
+
 		gm = new GraphicManager(mm, hm);
 
 		Frame frame = new Frame("Vanished");
@@ -191,8 +200,39 @@ public class GUI_Game implements GLEventListener, KeyListener, MouseListener, Mo
 	}
 
 	@Override
-	public void mouseClicked(MouseEvent e) {
-		pointOld = e.getPoint();
+	public void mouseClicked(MouseEvent event) {
+		// クリックした場所にビルがあれば、ビル情報を別窓で表示する。
+		try {
+			Point point = event.getPoint();
+			double[][] p1Data = { { (point.x - width * 0.5) / height }, { (height * 0.5 - point.y) / height }, { 1 } };
+			MyMatrix p1 = new MyMatrix(p1Data);
+
+			MyMatrix R = camera.GetR();
+			MyMatrix t = camera.GetT();
+
+			MyMatrix v1 = R.times(p1);
+
+			double rate1 = -t.get(1, 0) / v1.get(1, 0);
+
+			if (rate1 > 0) {
+				MyMatrix pos = t.plus(v1.times(rate1));
+
+				int cx = (int) pos.get(0, 0);
+				int cz = (int) pos.get(2, 0);
+
+				ArrayList<Building> ret = mm.GetBuildingList(cx, cx + 1, cz, cz + 1);
+				if (ret.size() > 0) {
+					Building b = ret.get(0);
+
+					GUI_Graph_Building graph = new GUI_Graph_Building(b);
+				}
+			}
+
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+
+		pointOld = event.getPoint();
 
 	}
 
@@ -214,24 +254,6 @@ public class GUI_Game implements GLEventListener, KeyListener, MouseListener, Mo
 
 	@Override
 	public void mouseExited(MouseEvent e) {
-		// TODO Auto-generated method stub
-
-	}
-
-	@Override
-	public void keyTyped(KeyEvent e) {
-		// TODO Auto-generated method stub
-
-	}
-
-	@Override
-	public void keyPressed(KeyEvent e) {
-		// TODO Auto-generated method stub
-
-	}
-
-	@Override
-	public void keyReleased(KeyEvent e) {
 		// TODO Auto-generated method stub
 
 	}
@@ -302,6 +324,24 @@ public class GUI_Game implements GLEventListener, KeyListener, MouseListener, Mo
 	public void mouseWheelMoved(MouseWheelEvent e) {
 		int rot = e.getWheelRotation();
 		this.camera.ChangeDistanceLevel(rot);
+
+	}
+
+	@Override
+	public void keyTyped(KeyEvent e) {
+		// TODO Auto-generated method stub
+
+	}
+
+	@Override
+	public void keyPressed(KeyEvent e) {
+		// TODO Auto-generated method stub
+
+	}
+
+	@Override
+	public void keyReleased(KeyEvent e) {
+		// TODO Auto-generated method stub
 
 	}
 

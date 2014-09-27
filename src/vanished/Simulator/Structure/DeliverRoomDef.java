@@ -7,7 +7,7 @@ import vanished.Simulator.GlobalParameter;
 import vanished.Simulator.Item.ItemDef;
 import vanished.Simulator.Item.ItemDefComparator;
 
-public class DeliverRoomDef extends RunnableRoomDef {
+public class DeliverRoomDef extends RoomDef {
 
 	// ”[“ü‚É•K—v‚ÈŽžŠÔ
 	long durationForDeliver;

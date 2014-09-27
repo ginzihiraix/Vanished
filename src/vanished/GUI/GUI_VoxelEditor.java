@@ -23,6 +23,8 @@ import javax.media.opengl.GL2;
 import javax.media.opengl.GLAutoDrawable;
 import javax.media.opengl.GLEventListener;
 import javax.media.opengl.awt.GLCanvas;
+import javax.swing.JButton;
+import javax.swing.JFrame;
 
 import com.jogamp.opengl.util.Animator;
 
@@ -37,6 +39,21 @@ public class GUI_VoxelEditor implements GLEventListener, KeyListener, MouseListe
 	Camera camera = new Camera();
 
 	public GUI_VoxelEditor() {
+
+		{
+			JFrame jf = new JFrame();
+			JButton button = new JButton("GG");
+			jf.add(button);
+
+			jf.setVisible(true);
+		}
+		{
+			JFrame frame = new JFrame("ƒ^ƒCƒgƒ‹");
+			frame.setBounds(100, 100, 200, 160);
+			frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+			frame.setVisible(true);
+		}
+
 		Frame frame = new Frame("Vanished");
 		frame.addKeyListener(this);
 

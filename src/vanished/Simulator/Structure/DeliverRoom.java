@@ -10,7 +10,7 @@ import vanished.Simulator.Item.Item;
 import vanished.Simulator.Item.ItemDef;
 import vanished.Simulator.Item.ItemDefComparator;
 
-public class DeliverRoom extends RunnableRoom {
+public class DeliverRoom extends Room {
 
 	TreeMap<ItemDef, StockManager> deliverStockManager = new TreeMap<ItemDef, StockManager>(new ItemDefComparator());
 
@@ -83,10 +83,6 @@ public class DeliverRoom extends RunnableRoom {
 
 	// アイテムを売る。
 	public void SellItem(long timeNow, Item item, double price, boolean simulation) throws HumanSimulationException {
-		DeliverRoomDef deliverRoomDef = (DeliverRoomDef) roomDef;
-
-		this.Greeting(timeNow, deliverRoomDef.durationForDeliver, simulation);
-
 		// アイテムを格納する。
 		StockManager sm = deliverStockManager.get(item.GetItemDef());
 		sm.Put(timeNow, item, simulation);
@@ -101,6 +97,10 @@ public class DeliverRoom extends RunnableRoom {
 	public void FeedbackAboutDeliverPrice(ItemDef itemDef, double price, double quantity) {
 		StockManager sm = deliverStockManager.get(itemDef);
 		sm.Feedback(price, quantity);
+	}
+
+	public void DiscardOldLog(long timeNow) {
+		super.DiscardOldLog(timeNow);
 	}
 
 	// /////////////////////////////////////////////////////////////////////

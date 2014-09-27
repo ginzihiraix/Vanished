@@ -2,7 +2,6 @@ package vanished.Simulator.Structure;
 
 import vanished.Simulator.ExponentialMovingAverage;
 import vanished.Simulator.HumanSimulationException;
-import vanished.Simulator.Inventory;
 
 public class Room {
 
@@ -15,13 +14,10 @@ public class Room {
 	private double money = 0;
 
 	// 過去1年のお金のトランザクションの平均
-	private ExponentialMovingAverage moneyMovingAverage = new ExponentialMovingAverage(60 * 24 * 365, true);
+	private ExponentialMovingAverage moneyIncomeMovingAverage = new ExponentialMovingAverage(60 * 24 * 365, true);
 
 	// 部屋にいる人のリスト
 	private HumanExistRecordManager humanExistRoomManager = new HumanExistRecordManager();
-
-	// 部屋にあるアイテムのリスト
-	private Inventory itemInventory = new Inventory();
 
 	public Room(Building building, RoomDef roomDef) {
 		this.roomDef = roomDef;
@@ -63,6 +59,11 @@ public class Room {
 		return roomDef.name;
 	}
 
+	public void DiscardOldLog(long timeNow) {
+		long duration = 60L * 24L * 100L;
+		this.humanExistRoomManager.DiscardOldLog(timeNow - duration);
+	}
+
 	// 部屋に入れるかどうか調べる。
 	private boolean IsEnterable(long timeStart, long duration) {
 		// 部屋に入れるかどうか調べる。
@@ -71,16 +72,16 @@ public class Room {
 		return true;
 	}
 
-	public void Enter(long timeStart, long duration, boolean simulation) throws HumanSimulationException {
-		if (this.IsEnterable(timeStart, duration) == false) throw new HumanSimulationException("RunnableRoom.Work : human capacity is full");
+	public void Enter(long timeNow, long duration, boolean simulation) throws HumanSimulationException {
+		if (this.IsEnterable(timeNow, duration) == false) throw new HumanSimulationException("RunnableRoom.Work : human capacity is full");
 		if (simulation == false) {
-			humanExistRoomManager.Add(timeStart, duration, 1);
+			humanExistRoomManager.Add(timeNow, duration, 1);
 		}
 	}
 
 	public void AddMoney(long timeNow, double add) {
 		this.money += add;
-		this.moneyMovingAverage.Add(timeNow, add);
+		this.moneyIncomeMovingAverage.Add(timeNow, add);
 	}
 
 	public double GetMoney() {
@@ -88,6 +89,6 @@ public class Room {
 	}
 
 	public double GetMoneyAverage(long timeNow) {
-		return this.moneyMovingAverage.GetAverage(timeNow);
+		return this.moneyIncomeMovingAverage.GetAverage(timeNow);
 	}
 }

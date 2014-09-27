@@ -13,7 +13,6 @@ import vanished.Simulator.Structure.BuildingDef;
 import vanished.Simulator.Structure.DeliverRoomDef;
 import vanished.Simulator.Structure.FactoryRoomDef;
 import vanished.Simulator.Structure.RoomDef;
-import vanished.Simulator.Structure.RunnableRoomDef;
 import vanished.Simulator.Structure.ShopRoomDef;
 
 public class DefManager {
@@ -113,8 +112,6 @@ public class DefManager {
 			RoomDef roomDef = null;
 			if (type.equals("general")) {
 				roomDef = new RoomDef(name, p);
-			} else if (type.equals("runnable")) {
-				roomDef = new RunnableRoomDef(name, p);
 			} else if (type.equals("deliver")) {
 				roomDef = new DeliverRoomDef(name, p);
 			} else if (type.equals("shop")) {

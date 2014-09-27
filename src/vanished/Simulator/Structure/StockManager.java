@@ -2,7 +2,7 @@ package vanished.Simulator.Structure;
 
 import vanished.Simulator.HumanSimulationException;
 import vanished.Simulator.Inventory;
-import vanished.Simulator.MovingAverage;
+import vanished.Simulator.AverageComputer;
 import vanished.Simulator.OtherUtility;
 import vanished.Simulator.Item.Item;
 import vanished.Simulator.Item.ItemDef;
@@ -21,7 +21,6 @@ public class StockManager {
 		this.itemDef = itemDef;
 		this.stockManagerInfo = stockManagerInfo;
 		price = 1 + OtherUtility.RandGaussian() * 0.1;
-		// profitRate = 1.01;
 		inventory = new Inventory(stockManagerInfo.capacity * itemDef.GetWeight());
 	}
 
@@ -77,11 +76,11 @@ public class StockManager {
 	// ìùåvóp
 	// ////////////////////////////////////////////////////////
 	// ////////////////////////////////////////////////////////
-	private MovingAverage inputAverage = new MovingAverage();
-	private MovingAverage outputAverage = new MovingAverage();
+	private AverageComputer inputAverage = new AverageComputer();
+	private AverageComputer outputAverage = new AverageComputer();
 
-	private MovingAverage inputAverageSimulation = new MovingAverage();
-	private MovingAverage outputAverageSimulation = new MovingAverage();
+	private AverageComputer inputAverageSimulation = new AverageComputer();
+	private AverageComputer outputAverageSimulation = new AverageComputer();
 
 	public double GetInputTotal() {
 		return this.inputAverage.GetTotal();

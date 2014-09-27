@@ -75,7 +75,7 @@ public class HumanExistRecordManager {
 		return average;
 	}
 
-	public void RemoveOld(long timeOld) {
+	public void DiscardOldLog(long timeOld) {
 		for (Iterator<HumanExistRecord> it = recordList.iterator(); it.hasNext();) {
 			HumanExistRecord r = it.next();
 			if (r.timeStart + r.duration < timeOld) {

@@ -53,6 +53,14 @@ public class Building {
 		this.realFlag = realFlag;
 	}
 
+	public String GetName() {
+		return buildingDef.name;
+	}
+
+	public boolean IsReal() {
+		return realFlag;
+	}
+
 	public Rect GetLocation() {
 		if (direction == 0) {
 			Rect rect = new Rect(location.x, location.x + buildingDef.width, location.y, location.y + buildingDef.height);
@@ -71,7 +79,11 @@ public class Building {
 		}
 	}
 
-	public void IsBuildCompleted() {
+	public boolean IsBuildingCompleted() {
+		return buildCompletedFlag;
+	}
+
+	public void ChangeBuildingStatus() {
 		if (buildCompletedFlag == false) {
 			if (buildRoom.shopStockManager.GetNumStock() >= 1) {
 				System.out.println("祝、建設完成！！！！！！！！！");
@@ -98,6 +110,13 @@ public class Building {
 			return ret;
 		} else {
 			return roomList;
+		}
+	}
+
+	public void DiscardOldLog(long timeNow) {
+		this.buildRoom.DiscardOldLog(timeNow);
+		for (Room room : roomList) {
+			room.DiscardOldLog(timeNow);
 		}
 	}
 }

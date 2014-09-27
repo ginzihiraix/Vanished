@@ -88,7 +88,7 @@ public class ShopRoom extends DeliverRoom {
 			throws HumanSimulationException {
 		ShopRoomDef shopRoomDef = (ShopRoomDef) roomDef;
 
-		this.Greeting(timeNow, shopRoomDef.durationToSell, simulation);
+		this.Enter(timeNow, shopRoomDef.durationToSell, simulation);
 
 		if (maxMoney < itemCatalog.price * numPick) throw new HumanSimulationException("BuyProductItems : less money to buy");
 
@@ -106,4 +106,9 @@ public class ShopRoom extends DeliverRoom {
 	public void FeedbackAboutProductPrice(double price, double quantity) {
 		this.shopStockManager.Feedback(price, quantity);
 	}
+
+	public void DiscardOldLog(long timeNow) {
+		super.DiscardOldLog(timeNow);
+	}
+
 }

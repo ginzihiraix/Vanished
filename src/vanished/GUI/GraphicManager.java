@@ -3,7 +3,6 @@ package vanished.GUI;
 import ibm.ANACONDA.MatrixUtility;
 import ibm.ANACONDA.MyMatrix;
 
-import java.awt.Font;
 import java.util.ArrayList;
 
 import javax.media.opengl.GL2;
@@ -13,7 +12,6 @@ import vanished.Simulator.MapManager;
 import vanished.Simulator.Rect;
 import vanished.Simulator.Structure.Building;
 
-import com.jogamp.opengl.util.awt.TextRenderer;
 import com.jogamp.opengl.util.gl2.GLUT;
 
 public class GraphicManager {

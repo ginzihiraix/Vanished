@@ -61,6 +61,7 @@ public class SimulationMain extends Thread {
 				System.out.println(um.ComputeUtility(100));
 			}
 
+			long timeLast1day = 0;
 			long timeLast7day = 0;
 			long timeLast100day = 0;
 
@@ -72,6 +73,40 @@ public class SimulationMain extends Thread {
 
 				humanOldest.GenerateAndExecuteAction();
 
+				if (timeNow - timeLast1day >= 60 * 24) {
+					timeLast1day = timeNow;
+
+					// 古いログは廃棄する。
+					for (Building building : mapManager.buildingList) {
+						building.DiscardOldLog(timeNow);
+					}
+				}
+
+				if (timeNow - timeLast7day >= 60 * 24 * 7) {
+					timeLast7day = timeNow;
+
+					// 建設完了している建物は、建築完了フラグを立てる。
+					{
+						for (Building building : mapManager.buildingList) {
+							building.ChangeBuildingStatus();
+						}
+
+					}
+
+					// 価格を調整する。
+					{
+						for (Building building : mapManager.buildingList) {
+							for (Room room : building.GetRoomList()) {
+								if (room instanceof FactoryRoom) {
+									FactoryRoom factoryRoom = (FactoryRoom) room;
+									factoryRoom.DumpStatus(timeNow);
+									factoryRoom.ManagePriceSet(mapManager, humanManager, timeNow);
+								}
+							}
+						}
+						System.out.println("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%");
+					}
+				}
 				if (timeNow - timeLast100day > 60 * 24 * 100) {
 					timeLast100day = timeNow;
 
@@ -118,31 +153,6 @@ public class SimulationMain extends Thread {
 					}
 				}
 
-				if (timeNow - timeLast7day >= 60 * 24 * 7) {
-					timeLast7day = timeNow;
-
-					// 建設完了している建物は、建築完了フラグを立てる。
-					{
-						for (Building building : mapManager.buildingList) {
-							building.IsBuildCompleted();
-						}
-
-					}
-
-					// 価格を調整する。
-					{
-						for (Building building : mapManager.buildingList) {
-							for (Room room : building.GetRoomList()) {
-								if (room instanceof FactoryRoom) {
-									FactoryRoom factoryRoom = (FactoryRoom) room;
-									factoryRoom.DumpStatus(timeNow);
-									factoryRoom.ManagePriceSet(mapManager, humanManager, timeNow);
-								}
-							}
-						}
-						System.out.println("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%");
-					}
-				}
 			}
 
 		} catch (Exception e) {

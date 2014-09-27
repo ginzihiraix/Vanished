@@ -12,7 +12,6 @@ import vanished.Simulator.Structure.DeliverRoom.CallForItem;
 import vanished.Simulator.Structure.FactoryRoom;
 import vanished.Simulator.Structure.FactoryRoom.CallForMaker;
 import vanished.Simulator.Structure.Room;
-import vanished.Simulator.Structure.RunnableRoom;
 import vanished.Simulator.Structure.ShopRoom;
 import vanished.Simulator.Structure.ShopRoom.ItemCatalog;
 
@@ -47,6 +46,20 @@ public class MapManager {
 		return ret;
 	}
 
+	public ArrayList<Room> GetRoomList(MoveMethod moveMethod, long maxTravelTime, Room currentRoom) {
+		ArrayList<Room> list = new ArrayList<Room>();
+		for (Building building : buildingList) {
+			for (Room room : building.GetRoomList()) {
+				if (moveMethod != null && currentRoom != null) {
+					long travelTime = this.GetTravelTime(moveMethod, room, currentRoom);
+					if (travelTime > maxTravelTime) continue;
+				}
+				list.add(room);
+			}
+		}
+		return list;
+	}
+
 	public ArrayList<ShopRoom> GetConsumableRoomList(MoveMethod moveMethod, long maxTravelTime, double maxMoney, long timeStart, Room currentRoom) {
 		ArrayList<ShopRoom> list = new ArrayList<ShopRoom>();
 		for (Building building : buildingList) {
@@ -62,25 +75,6 @@ public class MapManager {
 					if (ic.itemDef instanceof ConsumeDef == false) continue;
 
 					list.add(shopRoom);
-				}
-			}
-		}
-		return list;
-	}
-
-	public ArrayList<RunnableRoom> GetRunnableRoomList(MoveMethod moveMethod, long maxTravelTime, Room currentRoom) {
-		ArrayList<RunnableRoom> list = new ArrayList<RunnableRoom>();
-		for (Building building : buildingList) {
-			for (Room room : building.GetRoomList()) {
-				if (room instanceof RunnableRoom) {
-					RunnableRoom runnableRoom = (RunnableRoom) room;
-
-					if (moveMethod != null) {
-						long travelTime = this.GetTravelTime(moveMethod, room, currentRoom);
-						if (travelTime > maxTravelTime) continue;
-					}
-
-					list.add(runnableRoom);
 				}
 			}
 		}

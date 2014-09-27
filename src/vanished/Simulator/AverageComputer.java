@@ -1,6 +1,6 @@
 package vanished.Simulator;
 
-public class MovingAverage {
+public class AverageComputer {
 	double total = 0;
 	int num = 0;
 

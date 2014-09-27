@@ -195,57 +195,7 @@ public class FactoryRoom extends ShopRoom {
 	// 作業してアイテムを作る。
 	public void Make(CallForMaker cfm, long timeNow, boolean simulation) throws HumanSimulationException {
 
-		// 作るアイテムの個数を調べる。
-		// double numMakableMin;
-		// {
-		// numMakableMin = this.factoryProductManager.factoryMakerManager.factoryMakerInfo.numProductPerMake * cfm.duration
-		// / this.factoryProductManager.factoryMakerManager.factoryMakerInfo.durationForMake * prob;
-		// }
-
-		// {
-		// numMakableMin = this.factoryProductManager.factoryMakerManager.factoryMakerInfo.numProductPerMake * prob;
-		//
-		// // 材料の在庫による制約を考慮する。
-		// for (Entry<ItemDef, FactoryMaterialManager> e : factoryProductManager.factoryMaterialManager.entrySet()) {
-		// ItemDef materialItemDef = e.getKey();
-		// FactoryMaterialManager materialManager = e.getValue();
-		//
-		// StockManager materialStockManager = this.deliverStockManager.get(materialItemDef);
-		// double numStock = materialStockManager.GetNumStock();
-		//
-		// double numMakable = numStock / materialManager.factoryMaterialInfo.amount;
-		//
-		// if (numMakable < numMakableMin) {
-		// numMakableMin = numMakable;
-		// }
-		// }
-		//
-		// // 製品の在庫の上限を考慮する。
-		// {
-		// double numMakable = shopStockManager.FindStockSpace();
-		// if (numMakable < numMakableMin) {
-		// numMakableMin = numMakable;
-		// }
-		//
-		// // TODO
-		// System.out.println(this.roomDef.name + ", " + this.IsReal() + ", " + numMakable);
-		// }
-		//
-		// if (numMakableMin <= 0) { throw new HumanSimulationException("FactoryRoom.Make : Couldn't make the product because of lack of stock"); }
-		// }
-
-		// 賃金と労働時間を求める。個数割り。
-		// MakeResult result;
-		// {
-		// double gain = numMakableMin / this.factoryProductManager.factoryMakerManager.factoryMakerInfo.numProductPerMake * cfm.wage;
-		// long duration = (long) (numMakableMin / this.factoryProductManager.factoryMakerManager.factoryMakerInfo.numProductPerMake *
-		// this.factoryProductManager.factoryMakerManager.factoryMakerInfo.durationForMake);
-		// if (duration == 0) throw new HumanSimulationException("FactoryRoom.Make : duration = 0");
-		// result = new MakeResult(gain, duration);
-		// }
-
-		// Workerに挨拶する。
-		this.Greeting(timeNow, cfm.duration, simulation);
+		this.Enter(timeNow, cfm.duration, simulation);
 
 		if (simulation == false) {
 			// 材料を減らす。
@@ -271,6 +221,10 @@ public class FactoryRoom extends ShopRoom {
 	// 商品価格に対してフォードバックを与える。どのくらいの確率で選択されたか、各Humanがフィードバックを与える。
 	public void FeedbackAboutMakerPrice(CallForMaker cfm, double price, double quantity) {
 		this.factoryProductManager.factoryMakerManager.Feedback(price, quantity);
+	}
+
+	public void DiscardOldLog(long timeNow) {
+		super.DiscardOldLog(timeNow);
 	}
 
 	// /////////////////////////////////////////////////////////////////////
