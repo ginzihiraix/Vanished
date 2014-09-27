@@ -1,8 +1,8 @@
 package vanished.Simulator.Structure;
 
+import vanished.Simulator.EventLogManager;
 import vanished.Simulator.HumanSimulationException;
 import vanished.Simulator.Inventory;
-import vanished.Simulator.AverageComputer;
 import vanished.Simulator.OtherUtility;
 import vanished.Simulator.Item.Item;
 import vanished.Simulator.Item.ItemDef;
@@ -41,22 +41,20 @@ public class StockManager {
 		Item ret;
 		if (simulation == false) {
 			ret = this.inventory.Get(itemDef, numPick);
-			this.outputAverage.Add(numPick);
+			this.numStockHistory.Put(timeNow, this.inventory.GetNumStock(itemDef));
 		} else {
 			ret = this.inventory.Peek(itemDef, numPick);
-			this.outputAverageSimulation.Add(numPick);
 		}
 		return ret;
 	}
 
-	public void Put(long timeNow, Item item, boolean simulation) throws HumanSimulationException {
-		if (item.GetItemDef() != this.itemDef) throw new HumanSimulationException("fatal error");
+	public void Put(long timeNow, Item item, boolean simulation) throws Exception {
+		if (item.GetItemDef() != this.itemDef) throw new Exception("fatal error");
 		if (simulation == false) {
 			this.inventory.Put(item);
-			this.inputAverage.Add(item.GetQuantity());
+			this.numStockHistory.Put(timeNow, this.inventory.GetNumStock(itemDef));
 		} else {
 			this.inventory.PutTest(item);
-			this.inputAverageSimulation.Add(item.GetQuantity());
 		}
 	}
 
@@ -73,44 +71,30 @@ public class StockManager {
 
 	// ////////////////////////////////////////////////////////
 	// ////////////////////////////////////////////////////////
-	// 統計用
+	// ログ用。在庫量の変化を記録し続ける。定期的に大昔のログは消す。
 	// ////////////////////////////////////////////////////////
 	// ////////////////////////////////////////////////////////
-	private AverageComputer inputAverage = new AverageComputer();
-	private AverageComputer outputAverage = new AverageComputer();
 
-	private AverageComputer inputAverageSimulation = new AverageComputer();
-	private AverageComputer outputAverageSimulation = new AverageComputer();
+	private EventLogManager numStockHistory = new EventLogManager();
 
-	public double GetInputTotal() {
-		return this.inputAverage.GetTotal();
+	public void DiscardOldLog(long timeNow) {
+		numStockHistory.DiscardOldLog(timeNow);
 	}
 
-	public double GetOutputTotal() {
-		return this.outputAverage.GetTotal();
-	}
-
-	public double GetInputTotalSimulation() {
-		return this.inputAverageSimulation.GetTotal();
-	}
-
-	public double GetOutputTotalSimulation() {
-		return this.outputAverageSimulation.GetTotal();
-	}
-
-	public void ResetStatisticalParameters() {
-		this.inputAverage.Clear();
-		this.outputAverage.Clear();
-		this.inputAverageSimulation.Clear();
-		this.outputAverageSimulation.Clear();
-
-		feedbackManager.ResetStatisticalParameters();
-	}
+	// ////////////////////////////////////////////////////////
+	// ////////////////////////////////////////////////////////
+	// 統計用。価格の調整に使う。価格調整毎にクリアする。
+	// ////////////////////////////////////////////////////////
+	// ////////////////////////////////////////////////////////
 
 	public FeedbackManager feedbackManager = new FeedbackManager();
 
 	public void Feedback(double price, double quantity) {
 		feedbackManager.Add(price, quantity);
+	}
+
+	public void ResetStatisticalParameters() {
+		feedbackManager.ResetStatisticalParameters();
 	}
 
 }

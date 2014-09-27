@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.Map.Entry;
 import java.util.TreeMap;
 
-import vanished.Simulator.HumanSimulationException;
 import vanished.Simulator.OtherUtility;
 import vanished.Simulator.Item.Item;
 import vanished.Simulator.Item.ItemDef;
@@ -82,7 +81,7 @@ public class DeliverRoom extends Room {
 	}
 
 	// アイテムを売る。
-	public void SellItem(long timeNow, Item item, double price, boolean simulation) throws HumanSimulationException {
+	public void SellItem(long timeNow, Item item, double price, boolean simulation) throws Exception {
 		// アイテムを格納する。
 		StockManager sm = deliverStockManager.get(item.GetItemDef());
 		sm.Put(timeNow, item, simulation);
@@ -99,8 +98,20 @@ public class DeliverRoom extends Room {
 		sm.Feedback(price, quantity);
 	}
 
+	// ////////////////////////////////////////////////////////
+	// ////////////////////////////////////////////////////////
+	// イベント記録用
+	// ////////////////////////////////////////////////////////
+	// ////////////////////////////////////////////////////////
+
 	public void DiscardOldLog(long timeNow) {
 		super.DiscardOldLog(timeNow);
+
+		long duration = 60L * 24L * 365L * 10L;
+		for (Entry<ItemDef, StockManager> e : deliverStockManager.entrySet()) {
+			StockManager sm = e.getValue();
+			sm.DiscardOldLog(timeNow - duration);
+		}
 	}
 
 	// /////////////////////////////////////////////////////////////////////

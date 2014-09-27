@@ -17,6 +17,5 @@ public class RoomDef {
 		this.capacityHuman = Double.parseDouble(p.getProperty("all.capacityHuman"));
 
 		this.capacityItemWeight = Double.parseDouble(p.getProperty("all.capacityItemWeight"));
-
 	}
 }

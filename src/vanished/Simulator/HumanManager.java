@@ -3,7 +3,7 @@ package vanished.Simulator;
 import java.util.ArrayList;
 
 import vanished.Simulator.Skill.Skill;
-import vanished.Simulator.Structure.ShopRoom;
+import vanished.Simulator.Structure.Room;
 
 public class HumanManager {
 
@@ -11,8 +11,8 @@ public class HumanManager {
 
 	public HumanManager(MapManager mm) throws Exception {
 		for (int i = 0; i < 50; i++) {
-			ArrayList<ShopRoom> list = mm.GetConsumableRoomList(null, Long.MAX_VALUE, Double.MAX_VALUE, 0, null);
-			ShopRoom currentRoom = list.get(OtherUtility.rand.nextInt(list.size()));
+			ArrayList<Room> list = mm.GetRoomList(null, Long.MAX_VALUE, null);
+			Room currentRoom = list.get(OtherUtility.rand.nextInt(list.size()));
 			Human human = new Human(mm, 0, currentRoom);
 			humans.add(human);
 		}

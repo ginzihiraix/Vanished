@@ -1,10 +1,12 @@
 package vanished.Simulator.Structure;
 
+import java.util.ArrayList;
 import java.util.Map.Entry;
 import java.util.TreeMap;
 
+import vanished.Simulator.EventLogManager;
+import vanished.Simulator.EventLogManager.EventLog;
 import vanished.Simulator.HumanManager;
-import vanished.Simulator.HumanSimulationException;
 import vanished.Simulator.MapManager;
 import vanished.Simulator.OtherUtility;
 import vanished.Simulator.Item.Item;
@@ -17,9 +19,9 @@ import vanished.Simulator.Structure.FactoryRoomDef.FactoryProductInfo;
 
 public class FactoryRoom extends ShopRoom {
 
-	boolean forBuilding = false;
+	private boolean forBuilding = false;
 
-	FactoryProductManager factoryProductManager;
+	private FactoryProductManager factoryProductManager;
 
 	public class FactoryMaterialManager {
 
@@ -193,11 +195,13 @@ public class FactoryRoom extends ShopRoom {
 	}
 
 	// 作業してアイテムを作る。
-	public void Make(CallForMaker cfm, long timeNow, boolean simulation) throws HumanSimulationException {
+	public void Make(CallForMaker cfm, long timeNow, boolean simulation) throws Exception {
 
 		this.Enter(timeNow, cfm.duration, simulation);
 
 		if (simulation == false) {
+			makerNumMakeEvent.Put(timeNow, cfm.numMake);
+
 			// 材料を減らす。
 			for (Entry<ItemDef, FactoryMaterialManager> e : factoryProductManager.factoryMaterialManager.entrySet()) {
 				ItemDef materialItemDef = e.getKey();
@@ -223,8 +227,23 @@ public class FactoryRoom extends ShopRoom {
 		this.factoryProductManager.factoryMakerManager.Feedback(price, quantity);
 	}
 
+	// ////////////////////////////////////////////////////////
+	// ////////////////////////////////////////////////////////
+	// イベント記録用
+	// ////////////////////////////////////////////////////////
+	// ////////////////////////////////////////////////////////
+
+	private EventLogManager makerNumMakeEvent = new EventLogManager();
+
+	public ArrayList<EventLog> GetNumMakeLog(int numSample) {
+		return this.makerNumMakeEvent.Get(numSample);
+	}
+
 	public void DiscardOldLog(long timeNow) {
 		super.DiscardOldLog(timeNow);
+
+		long duration = 60L * 24L * 365L * 10L;
+		makerNumMakeEvent.DiscardOldLog(timeNow - duration);
 	}
 
 	// /////////////////////////////////////////////////////////////////////

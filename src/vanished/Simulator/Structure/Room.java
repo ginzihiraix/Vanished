@@ -14,7 +14,8 @@ public class Room {
 	private double money = 0;
 
 	// 過去1年のお金のトランザクションの平均
-	private ExponentialMovingAverage moneyIncomeMovingAverage = new ExponentialMovingAverage(60 * 24 * 365, true);
+	private ExponentialMovingAverage inputMoneyMovingAverage = new ExponentialMovingAverage(60 * 24 * 365, true);
+	private ExponentialMovingAverage outputMoneyMovingAverage = new ExponentialMovingAverage(60 * 24 * 365, true);
 
 	// 部屋にいる人のリスト
 	private HumanExistRecordManager humanExistRoomManager = new HumanExistRecordManager();
@@ -81,14 +82,22 @@ public class Room {
 
 	public void AddMoney(long timeNow, double add) {
 		this.money += add;
-		this.moneyIncomeMovingAverage.Add(timeNow, add);
+		if (add > 0) {
+			this.inputMoneyMovingAverage.Add(timeNow, add);
+		} else {
+			this.outputMoneyMovingAverage.Add(timeNow, -add);
+		}
 	}
 
 	public double GetMoney() {
 		return this.money;
 	}
 
-	public double GetMoneyAverage(long timeNow) {
-		return this.moneyIncomeMovingAverage.GetAverage(timeNow);
+	public double GetInputMoneyMovingAverage(long timeNow) {
+		return this.inputMoneyMovingAverage.GetAverage(timeNow);
+	}
+
+	public double GetOutputMoneyMovingAverage(long timeNow) {
+		return this.outputMoneyMovingAverage.GetAverage(timeNow);
 	}
 }

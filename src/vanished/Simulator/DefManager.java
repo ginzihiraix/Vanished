@@ -118,8 +118,6 @@ public class DefManager {
 				roomDef = new ShopRoomDef(name, p);
 			} else if (type.equals("factory")) {
 				roomDef = new FactoryRoomDef(name, p);
-				// } else if (type.equals("sleep")) {
-				// roomDef = new SleepRoomDef(name, p);
 			}
 			roomDefList.put(name, roomDef);
 		}

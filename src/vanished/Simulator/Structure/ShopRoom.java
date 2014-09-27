@@ -77,6 +77,10 @@ public class ShopRoom extends DeliverRoom {
 		return shopStockManager.GetNumStock();
 	}
 
+	public String GetProductItemName() {
+		return shopStockManager.stockManagerInfo.itemDef.GetName();
+	}
+
 	// 購入にかかる所要時間を取得する。
 	public long GetDurationToBuy() {
 		ShopRoomDef shopRoomDef = (ShopRoomDef) roomDef;
@@ -107,8 +111,16 @@ public class ShopRoom extends DeliverRoom {
 		this.shopStockManager.Feedback(price, quantity);
 	}
 
+	// ////////////////////////////////////////////////////////
+	// ////////////////////////////////////////////////////////
+	// イベント記録用
+	// ////////////////////////////////////////////////////////
+	// ////////////////////////////////////////////////////////
+
 	public void DiscardOldLog(long timeNow) {
 		super.DiscardOldLog(timeNow);
+		long duration = 60L * 24L * 365L * 10L;
+		this.shopStockManager.DiscardOldLog(timeNow - duration);
 	}
 
 }
