@@ -15,6 +15,12 @@ public class Camera {
 		z = MatrixUtility.NormalizeRowVector(z);
 	}
 
+	public Camera(Camera c) {
+		this.lookat = new MyMatrix(c.lookat);
+		this.z = new MyMatrix(c.z);
+		this.distanceLevel = c.distanceLevel;
+	}
+
 	public MyMatrix GetLookat() {
 		return lookat;
 	}

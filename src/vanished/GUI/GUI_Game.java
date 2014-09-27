@@ -30,7 +30,6 @@ import vanished.Simulator.MapManager;
 import com.jogamp.opengl.util.Animator;
 
 public class GUI_Game implements GLEventListener, KeyListener, MouseListener, MouseMotionListener, MouseWheelListener {
-	private GL2 gl;
 
 	int width = 800;
 	int height = 600;
@@ -99,7 +98,7 @@ public class GUI_Game implements GLEventListener, KeyListener, MouseListener, Mo
 	public void init(GLAutoDrawable drawable) {
 		System.out.println("init");
 
-		gl = drawable.getGL().getGL2();
+		GL2 gl = drawable.getGL().getGL2();
 
 		try {
 			LoadTexture(gl, "system/texture/texture_001.png", 1);
@@ -148,6 +147,8 @@ public class GUI_Game implements GLEventListener, KeyListener, MouseListener, Mo
 	public void reshape(GLAutoDrawable drawable, int x, int y, int width, int height) {
 		System.out.println("reshape");
 
+		GL2 gl = drawable.getGL().getGL2();
+
 		// OpenGLが表示に使う長方形領域を設定します。 (x,y)が表示領域の左上の座標、(w,h)が表示領域の幅と高さになります。
 		gl.glViewport(0, 0, width, height);
 
@@ -165,8 +166,10 @@ public class GUI_Game implements GLEventListener, KeyListener, MouseListener, Mo
 	}
 
 	@Override
-	public void display(GLAutoDrawable arg0) {
+	public void display(GLAutoDrawable drawable) {
 		// System.out.println("display");
+
+		GL2 gl = drawable.getGL().getGL2();
 
 		try {
 			synchronized (this) {
@@ -174,20 +177,7 @@ public class GUI_Game implements GLEventListener, KeyListener, MouseListener, Mo
 				gl.glClear(GL2.GL_COLOR_BUFFER_BIT | GL2.GL_DEPTH_BUFFER_BIT);
 
 				// Voxelをレンダリング
-				gl.glMatrixMode(GL2.GL_MODELVIEW);
-				gl.glLoadIdentity();
-
-				float[] m = new float[16];
-				m[0] = 1;
-				m[5] = 1;
-				m[10] = -1;
-				m[15] = 1;
-				gl.glMultMatrixf(m, 0);
-
-				float[] m2 = camera.GetRi4();
-				gl.glMultMatrixf(m2, 0);
-
-				gm.Render(gl, lightGlobal);
+				gm.Render(gl, lightGlobal, camera);
 			}
 		} catch (Exception e) {
 			e.printStackTrace();

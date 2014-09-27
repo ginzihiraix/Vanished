@@ -211,7 +211,6 @@ public class VoxelManager {
 			}
 
 			RenderObject ro = new RenderObject(numPlane * 6, 1, -1, -1, vertex, norm, coord, color, index);
-
 			renderObjects.add(ro);
 		}
 

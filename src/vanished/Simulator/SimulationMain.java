@@ -15,11 +15,11 @@ public class SimulationMain extends Thread {
 		mapManager = new MapManager();
 
 		{
-			mapManager.CreateBuilding(new Building(0, GlobalParameter.dm.GetBuilding("”°Ìê"), new Location(0, 0), 0, false));
+			mapManager.CreateBuilding(new Building(0, GlobalParameter.dm.GetBuilding("”°Ìê"), new Location(0, 0), 0, true));
 			mapManager.CreateBuilding(new Building(0, GlobalParameter.dm.GetBuilding("”°Ìê"), new Location(1, 1), 0, true));
 			mapManager.CreateBuilding(new Building(0, GlobalParameter.dm.GetBuilding("ÌÎê"), new Location(2, 2), 0, true));
 			mapManager.CreateBuilding(new Building(0, GlobalParameter.dm.GetBuilding("ÌÎê"), new Location(3, 3), 0, true));
-			mapManager.CreateBuilding(new Building(0, GlobalParameter.dm.GetBuilding("…‹‚‚İê"), new Location(4, 4), 0, true));
+			mapManager.CreateBuilding(new Building(0, GlobalParameter.dm.GetBuilding("…‹‚‚İê"), new Location(4, 4), 0, false));
 			mapManager.CreateBuilding(new Building(0, GlobalParameter.dm.GetBuilding("…‹‚‚İê"), new Location(5, 5), 0, true));
 			mapManager.CreateBuilding(new Building(0, GlobalParameter.dm.GetBuilding("’Ş‚èê"), new Location(6, 6), 0, true));
 			mapManager.CreateBuilding(new Building(0, GlobalParameter.dm.GetBuilding("’Ş‚èê"), new Location(7, 7), 0, true));

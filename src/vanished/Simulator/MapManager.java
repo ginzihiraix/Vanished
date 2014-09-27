@@ -41,7 +41,7 @@ public class MapManager {
 		ArrayList<Building> ret = new ArrayList<Building>();
 		for (Building building : buildingList) {
 			Rect rect = building.GetLocation();
-			if (rect.right < left || rect.left >= right || rect.top < bottom || rect.bottom >= top) continue;
+			if (rect.right <= left || rect.left >= right || rect.top <= bottom || rect.bottom >= top) continue;
 			ret.add(building);
 		}
 		return ret;

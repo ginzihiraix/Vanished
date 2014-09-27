@@ -185,6 +185,7 @@ public class Human {
 					consumeResults2.add(res);
 				}
 			}
+
 			this.ExecuteAction(workResults2, consumeResults2, virtualRoomTarget);
 		}
 
@@ -348,11 +349,11 @@ public class Human {
 						TraderWorkResult result = (TraderWorkResult) resSelected;
 						if (result.deliverRoom == virtualRoomTarget) {
 							Item item = new Item(result.itemDef, result.numPick);
-							result.deliverRoom.SellItem(humanStatus.timeSimulationComplete, item, result.callForItem.price, false);
+							result.deliverRoom.SellItem(humanStatus.timeSimulationComplete, item, result.callForItem.price * result.numPick, false);
 						}
 						if (result.shopRoom == virtualRoomTarget) {
-							result.shopRoom.BuyProductItem(humanStatus.timeSimulationComplete, result.itemCatalog.price, result.itemCatalog,
-									result.numPick, true);
+							result.shopRoom.BuyProductItem(humanStatus.timeSimulationComplete, result.itemCatalog.price * result.numPick,
+									result.itemCatalog, result.numPick, true);
 						}
 					} else if (resSelected instanceof MakerWorkResult) {
 						MakerWorkResult result = (MakerWorkResult) resSelected;
@@ -369,7 +370,8 @@ public class Human {
 					} else if (resSelected instanceof ConsumeResult) {
 						ConsumeResult result = (ConsumeResult) resSelected;
 						if (result.shopRoom == virtualRoomTarget) {
-							result.shopRoom.BuyProductItem(humanStatus.timeSimulationComplete, result.itemCatalog.price, result.itemCatalog, 1, true);
+							result.shopRoom
+									.BuyProductItem(humanStatus.timeSimulationComplete, result.itemCatalog.price, result.itemCatalog, 1, false);
 						}
 					}
 				}
@@ -415,7 +417,6 @@ public class Human {
 					}
 				}
 			}
-
 		}
 	}
 

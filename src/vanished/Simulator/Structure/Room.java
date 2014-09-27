@@ -40,6 +40,17 @@ public class Room {
 		System.out.println("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$");
 		System.out.println("===Room===");
 		System.out.println(roomDef.name);
+		if (building.realFlag) {
+			System.out.println("realFlag : ŽÀ‘Ì");
+		} else {
+			System.out.println("realFlag : ‰¼‘z");
+		}
+
+		if (building.buildCompletedFlag) {
+			System.out.println("Building Status : Œš’zŠ®—¹");
+		} else {
+			System.out.println("Building Status : Œš’z’†");
+		}
 		System.out.println("money : " + money);
 	}
 
