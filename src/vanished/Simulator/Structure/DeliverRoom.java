@@ -98,21 +98,29 @@ public class DeliverRoom extends Room {
 		sm.Feedback(price, quantity);
 	}
 
-	// ////////////////////////////////////////////////////////
+	// ////////////
+	// //////////////////////////////////////////
 	// ////////////////////////////////////////////////////////
 	// イベント記録用
 	// ////////////////////////////////////////////////////////
 	// ////////////////////////////////////////////////////////
 
-	public void DiscardOldLog(long timeNow) {
+	public void DiscardOldLog(long timeNow) throws Exception {
 		super.DiscardOldLog(timeNow);
 
-		long duration = 60L * 24L * 365L * 10L;
-		for (Entry<ItemDef, StockManager> e : deliverStockManager.entrySet()) {
-			StockManager sm = e.getValue();
-			sm.DiscardOldLog(timeNow - duration);
-		}
+		// long duration = 60L * 24L * 365L * 10L;
+		// for (Entry<ItemDef, StockManager> e : deliverStockManager.entrySet()) {
+		// StockManager sm = e.getValue();
+		// sm.DiscardOldLog(timeNow - duration);
+		// }
 	}
+
+	// public void WriteLog(long timeNow) throws Exception {
+	// for (Entry<ItemDef, StockManager> e : deliverStockManager.entrySet()) {
+	// StockManager sm = e.getValue();
+	// sm.WriteLog(timeNow);
+	// }
+	// }
 
 	// /////////////////////////////////////////////////////////////////////
 	// /////////////////////////////////////////////////////////////////////

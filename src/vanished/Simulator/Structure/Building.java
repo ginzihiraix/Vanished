@@ -113,7 +113,14 @@ public class Building {
 		}
 	}
 
-	public void DiscardOldLog(long timeNow) {
+	public void WriteLog(long timeNow) throws Exception {
+		this.buildRoom.WriteLog(timeNow);
+		for (Room room : roomList) {
+			room.WriteLog(timeNow);
+		}
+	}
+
+	public void DiscardOldLog(long timeNow) throws Exception {
 		this.buildRoom.DiscardOldLog(timeNow);
 		for (Room room : roomList) {
 			room.DiscardOldLog(timeNow);

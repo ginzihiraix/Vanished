@@ -200,7 +200,7 @@ public class FactoryRoom extends ShopRoom {
 		this.Enter(timeNow, cfm.duration, simulation);
 
 		if (simulation == false) {
-			makerNumMakeEvent.Put(timeNow, cfm.numMake);
+			// makerNumMakeEvent.Put(timeNow, cfm.numMake);
 
 			// çﬁóøÇå∏ÇÁÇ∑ÅB
 			for (Entry<ItemDef, FactoryMaterialManager> e : factoryProductManager.factoryMaterialManager.entrySet()) {
@@ -233,17 +233,8 @@ public class FactoryRoom extends ShopRoom {
 	// ////////////////////////////////////////////////////////
 	// ////////////////////////////////////////////////////////
 
-	private EventLogManager makerNumMakeEvent = new EventLogManager();
-
-	public ArrayList<EventLog> GetNumMakeLog(int numSample) {
-		return this.makerNumMakeEvent.Get(numSample);
-	}
-
-	public void DiscardOldLog(long timeNow) {
+	public void DiscardOldLog(long timeNow) throws Exception {
 		super.DiscardOldLog(timeNow);
-
-		long duration = 60L * 24L * 365L * 10L;
-		makerNumMakeEvent.DiscardOldLog(timeNow - duration);
 	}
 
 	// /////////////////////////////////////////////////////////////////////

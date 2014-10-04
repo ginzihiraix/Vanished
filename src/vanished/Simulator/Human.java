@@ -32,9 +32,9 @@ public class Human {
 	public void GenerateAndExecuteAction() throws Exception {
 
 		// TODO:‹à‚ª­‚È‚­‚È‚Á‚Ä‚½‚çA‚Æ‚è‚ ‚¦‚¸‘«‚·
-		// if (humanStatus.money < 1000) {
-		// humanStatus.money += 1000;
-		// }
+		if (humanStatus.money < 1000) {
+			humanStatus.money += 1000;
+		}
 
 		ArrayList<TryResult> workResults = new ArrayList<TryResult>();
 		ArrayList<TryResult> workResultsVirtual = new ArrayList<TryResult>();

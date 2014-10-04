@@ -147,8 +147,8 @@ public class GUI_Game implements GLEventListener, KeyListener, MouseListener, Mo
 
 		// ÉâÉCÉgÇÃê›íË
 		float[] lightPos = { 1, 8, -3, 0 };
-		float[] lightDiffuseColor = { 1, 1, 1, 1 };
-		float[] lightAmbientColor = { 2, 2, 2, 1 };
+		float[] lightDiffuseColor = { 0.5f, 0.5f, 0.5f, 1 };
+		float[] lightAmbientColor = { 0.5f, 0.5f, 0.5f, 1 };
 		lightGlobal = new LightSetting(true, lightPos, lightDiffuseColor, lightAmbientColor);
 	}
 

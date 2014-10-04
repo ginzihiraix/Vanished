@@ -1,7 +1,11 @@
 package vanished.Simulator.Structure;
 
+import java.util.ArrayList;
+
+import vanished.Simulator.ExponentialMovingAverage;
 import vanished.Simulator.HumanSimulationException;
 import vanished.Simulator.OtherUtility;
+import vanished.Simulator.EventLogManager.EventLog;
 import vanished.Simulator.Item.Item;
 import vanished.Simulator.Item.ItemDef;
 
@@ -88,8 +92,7 @@ public class ShopRoom extends DeliverRoom {
 	}
 
 	// è§ïiÇîÉÇ§
-	public Item BuyProductItem(long timeNow, double maxMoney, ItemCatalog itemCatalog, double numPick, boolean simulation)
-			throws HumanSimulationException {
+	public Item BuyProductItem(long timeNow, double maxMoney, ItemCatalog itemCatalog, double numPick, boolean simulation) throws Exception {
 		ShopRoomDef shopRoomDef = (ShopRoomDef) roomDef;
 
 		this.Enter(timeNow, shopRoomDef.durationToSell, simulation);
@@ -101,6 +104,7 @@ public class ShopRoom extends DeliverRoom {
 
 		if (simulation == false) {
 			this.AddMoney(timeNow, itemCatalog.price * numPick);
+			productInputMoneyEMA.Add(timeNow, itemCatalog.price * numPick);
 		}
 
 		return item;
@@ -117,10 +121,28 @@ public class ShopRoom extends DeliverRoom {
 	// ////////////////////////////////////////////////////////
 	// ////////////////////////////////////////////////////////
 
-	public void DiscardOldLog(long timeNow) {
+	private ExponentialMovingAverage productInputMoneyEMA = new ExponentialMovingAverage(60L * 24L * 10, true);
+
+	// public ArrayList<EventLog> GetNumProcutLog(int numSample) throws Exception {
+	// return this.shopStockManager.GetNumMakeLog(numSample);
+	// }
+	//
+	// public ArrayList<EventLog> GetNumProcutLog() throws Exception {
+	// return this.shopStockManager.GetNumMakeLog();
+	// }
+
+	public double GetProductInputStockEMA(long timeNow) {
+		return this.shopStockManager.GetInputStockEMA(timeNow);
+	}
+
+	public double GetProductInputMoneyEMA(long timeNow) {
+		return this.productInputMoneyEMA.GetAverage(timeNow);
+	}
+
+	public void DiscardOldLog(long timeNow) throws Exception {
 		super.DiscardOldLog(timeNow);
-		long duration = 60L * 24L * 365L * 10L;
-		this.shopStockManager.DiscardOldLog(timeNow - duration);
+		// long duration = 60L * 24L * 365L * 10L;
+		// this.shopStockManager.DiscardOldLog(timeNow - duration);
 	}
 
 }

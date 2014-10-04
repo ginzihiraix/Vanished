@@ -1,5 +1,6 @@
 package vanished.Simulator.Structure;
 
+import vanished.Simulator.EventLogManager;
 import vanished.Simulator.ExponentialMovingAverage;
 import vanished.Simulator.HumanSimulationException;
 
@@ -60,11 +61,6 @@ public class Room {
 		return roomDef.name;
 	}
 
-	public void DiscardOldLog(long timeNow) {
-		long duration = 60L * 24L * 100L;
-		this.humanExistRoomManager.DiscardOldLog(timeNow - duration);
-	}
-
 	// 部屋に入れるかどうか調べる。
 	private boolean IsEnterable(long timeStart, long duration) {
 		// 部屋に入れるかどうか調べる。
@@ -100,4 +96,22 @@ public class Room {
 	public double GetOutputMoneyMovingAverage(long timeNow) {
 		return this.outputMoneyMovingAverage.GetAverage(timeNow);
 	}
+
+	public void DiscardOldLog(long timeNow) throws Exception {
+		this.humanExistRoomManager.DiscardOldLog(timeNow);
+	}
+
+	// ////////////////////////////////////////////////////////
+	// ////////////////////////////////////////////////////////
+	// イベント記録用
+	// ////////////////////////////////////////////////////////
+	// ////////////////////////////////////////////////////////
+
+	EventLogManager numHuman = new EventLogManager(this.toString() + "_human");
+
+	public void WriteLog(long timeNow) throws Exception {
+		double num = this.humanExistRoomManager.MaxNum(timeNow, 1);
+		numHuman.Put(timeNow, num);
+	}
+
 }

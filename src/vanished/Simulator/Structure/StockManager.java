@@ -1,7 +1,6 @@
 package vanished.Simulator.Structure;
 
-import vanished.Simulator.EventLogManager;
-import vanished.Simulator.HumanSimulationException;
+import vanished.Simulator.ExponentialMovingAverage;
 import vanished.Simulator.Inventory;
 import vanished.Simulator.OtherUtility;
 import vanished.Simulator.Item.Item;
@@ -37,11 +36,12 @@ public class StockManager {
 		return this.inventory.GetNumStock(itemDef);
 	}
 
-	public Item Get(long timeNow, double numPick, boolean simulation) throws HumanSimulationException {
+	public Item Get(long timeNow, double numPick, boolean simulation) throws Exception {
 		Item ret;
 		if (simulation == false) {
 			ret = this.inventory.Get(itemDef, numPick);
-			this.numStockHistory.Put(timeNow, this.inventory.GetNumStock(itemDef));
+			this.numStockEMA.Add(timeNow, this.inventory.GetNumStock(itemDef));
+			this.outputStockEMA.Add(timeNow, numPick);
 		} else {
 			ret = this.inventory.Peek(itemDef, numPick);
 		}
@@ -52,7 +52,8 @@ public class StockManager {
 		if (item.GetItemDef() != this.itemDef) throw new Exception("fatal error");
 		if (simulation == false) {
 			this.inventory.Put(item);
-			this.numStockHistory.Put(timeNow, this.inventory.GetNumStock(itemDef));
+			this.numStockEMA.Add(timeNow, this.inventory.GetNumStock(itemDef));
+			this.inputStockEMA.Add(timeNow, item.GetQuantity());
 		} else {
 			this.inventory.PutTest(item);
 		}
@@ -75,10 +76,20 @@ public class StockManager {
 	// ////////////////////////////////////////////////////////
 	// ////////////////////////////////////////////////////////
 
-	private EventLogManager numStockHistory = new EventLogManager();
+	private ExponentialMovingAverage numStockEMA = new ExponentialMovingAverage(60L * 24L * 10, false);
+	private ExponentialMovingAverage inputStockEMA = new ExponentialMovingAverage(60L * 24L * 10, true);
+	private ExponentialMovingAverage outputStockEMA = new ExponentialMovingAverage(60L * 24L * 10, true);
 
-	public void DiscardOldLog(long timeNow) {
-		numStockHistory.DiscardOldLog(timeNow);
+	public double GetNumStockEMA(long timeNow) {
+		return numStockEMA.GetAverage(timeNow);
+	}
+
+	public double GetInputStockEMA(long timeNow) {
+		return inputStockEMA.GetAverage(timeNow);
+	}
+
+	public double GetOutputStockEMA(long timeNow) {
+		return outputStockEMA.GetAverage(timeNow);
 	}
 
 	// ////////////////////////////////////////////////////////

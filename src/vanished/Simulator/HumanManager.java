@@ -31,6 +31,17 @@ public class HumanManager {
 		return humanOld;
 	}
 
+	public long GetOldestTime() {
+		long timeOld = Long.MAX_VALUE;
+		for (Human human : humans) {
+			long timeNow = human.humanStatus.timeSimulationComplete;
+			if (timeNow < timeOld) {
+				timeOld = timeNow;
+			}
+		}
+		return timeOld;
+	}
+
 	public ArrayList<Human> GetHumanList(Skill skill) {
 		ArrayList<Human> ret = new ArrayList<Human>();
 		for (Human human : humans) {

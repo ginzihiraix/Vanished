@@ -76,6 +76,11 @@ public class SimulationMain extends Thread {
 				if (timeNow - timeLast1day >= 60 * 24) {
 					timeLast1day = timeNow;
 
+					// 一日の情報を記録する。
+					for (Building building : mapManager.buildingList) {
+						building.WriteLog(timeNow);
+					}
+
 					// 古いログは廃棄する。
 					for (Building building : mapManager.buildingList) {
 						building.DiscardOldLog(timeNow);
@@ -90,7 +95,6 @@ public class SimulationMain extends Thread {
 						for (Building building : mapManager.buildingList) {
 							building.ChangeBuildingStatus();
 						}
-
 					}
 
 					// 価格を調整する。
