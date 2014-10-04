@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.Map.Entry;
 
 import vanished.Simulator.HumanStatus.ConsumeResult;
+import vanished.Simulator.HumanStatus.ConsumeWithWorkResult;
 import vanished.Simulator.HumanStatus.MakerWorkResult;
 import vanished.Simulator.HumanStatus.NopResult;
 import vanished.Simulator.HumanStatus.TraderWorkResult;
@@ -78,14 +79,18 @@ public class Human {
 				try {
 					TryResult res = null;
 					HumanStatus humanStatusNew = new HumanStatus(mm, humanStatus);
-					int actionType = OtherUtility.rand.nextInt(2);
+					int actionType = OtherUtility.rand.nextInt(3);
 					switch (actionType) {
 					case 0: { // âΩÇ‡ÇµÇ»Ç¢
 						res = humanStatusNew.TryNop();
 						break;
 					}
-					case 1: { // êHÇ◊ÇÈ
+					case 1: { // è¡îÔÇ∑ÇÈÅBåªã‡çwì¸
 						res = humanStatusNew.TryConsume();
+						break;
+					}
+					case 2: {// è¡îÔÇ∑ÇÈÅBòJì≠Å{åªï®éxãã
+						res = humanStatusNew.TryConsumeWithWork();
 						break;
 					}
 					}
@@ -158,7 +163,19 @@ public class Human {
 						}
 						ress.add(res);
 					}
+				} else if (res instanceof ConsumeWithWorkResult) {
+					ConsumeWithWorkResult result = (ConsumeWithWorkResult) res;
+					if (result.factoryRoom.IsReal() == false) {
+						ArrayList<TryResult> ress = roomResultMap.get(result.factoryRoom);
+						if (ress == null) {
+							ress = new ArrayList<TryResult>();
+							roomResultMap.put(result.factoryRoom, ress);
+						}
+						ress.add(res);
+					}
 				} else if (res instanceof NopResult) {
+				} else {
+					throw new Exception("fatail error");
 				}
 			}
 		}
@@ -181,8 +198,12 @@ public class Human {
 					workResults2.add(res);
 				} else if (res instanceof ConsumeResult) {
 					consumeResults2.add(res);
+				} else if (res instanceof ConsumeWithWorkResult) {
+					consumeResults2.add(res);
 				} else if (res instanceof NopResult) {
 					consumeResults2.add(res);
+				} else {
+					throw new Exception("fatail error");
 				}
 			}
 
@@ -300,6 +321,11 @@ public class Human {
 				} else if (resSelected instanceof ConsumeResult) {
 					ConsumeResult result = (ConsumeResult) resSelected;
 					humanStatus.DoConsume(result);
+				} else if (resSelected instanceof ConsumeWithWorkResult) {
+					ConsumeWithWorkResult result = (ConsumeWithWorkResult) resSelected;
+					humanStatus.DoConsumeWithWork(result);
+				} else {
+					throw new Exception("fatal error");
 				}
 			} else {
 				humanStatus.DoNop();
@@ -333,6 +359,9 @@ public class Human {
 						} else if (resSelected instanceof ConsumeResult) {
 							ConsumeResult result = (ConsumeResult) resSelected;
 							result.shopRoom.FeedbackAboutProductPrice(result.itemCatalog.price, 1.0 * prob);
+						} else if (resSelected instanceof ConsumeWithWorkResult) {
+						} else {
+							throw new Exception("fatal error");
 						}
 					}
 				}
@@ -360,6 +389,8 @@ public class Human {
 						if (result.factoryRoom == virtualRoomTarget) {
 							result.factoryRoom.Make(result.cfm, humanStatus.timeSimulationComplete, false);
 						}
+					} else {
+						throw new Exception("fatal error");
 					}
 				}
 			} else if (consumeWeightTotal > 0) {
@@ -373,6 +404,13 @@ public class Human {
 							result.shopRoom
 									.BuyProductItem(humanStatus.timeSimulationComplete, result.itemCatalog.price, result.itemCatalog, 1, false);
 						}
+					} else if (resSelected instanceof ConsumeWithWorkResult) {
+						ConsumeWithWorkResult result = (ConsumeWithWorkResult) resSelected;
+						if (result.factoryRoom == virtualRoomTarget) {
+							result.factoryRoom.MakeInKind(result.cfm, this.humanStatus.timeSimulationComplete, false);
+						}
+					} else {
+						throw new Exception("fatal error");
 					}
 				}
 			}
@@ -413,6 +451,9 @@ public class Human {
 							if (result.shopRoom == virtualRoomTarget) {
 								result.shopRoom.FeedbackAboutProductPrice(result.itemCatalog.price, 1.0 * prob);
 							}
+						} else if (resSelected instanceof ConsumeWithWorkResult) {
+						} else {
+							throw new Exception("fatal error");
 						}
 					}
 				}

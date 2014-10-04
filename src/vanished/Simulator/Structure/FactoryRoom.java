@@ -1,11 +1,8 @@
 package vanished.Simulator.Structure;
 
-import java.util.ArrayList;
 import java.util.Map.Entry;
 import java.util.TreeMap;
 
-import vanished.Simulator.EventLogManager;
-import vanished.Simulator.EventLogManager.EventLog;
 import vanished.Simulator.HumanManager;
 import vanished.Simulator.MapManager;
 import vanished.Simulator.OtherUtility;
@@ -134,12 +131,16 @@ public class FactoryRoom extends ShopRoom {
 	}
 
 	// 欲しい人材リストを返す。
-	public CallForMaker GetDesiredMaker() {
+	public CallForMaker GetDesiredMaker(double numMakeMax) {
 
 		// 作るアイテムの個数を調べる。
 		double numMakableMin;
 		{
-			numMakableMin = this.factoryProductManager.factoryMakerManager.factoryMakerInfo.numProductPerMake;
+			numMakableMin = numMakeMax;
+
+			if (this.factoryProductManager.factoryMakerManager.factoryMakerInfo.numProductPerMake < numMakableMin) {
+				numMakableMin = this.factoryProductManager.factoryMakerManager.factoryMakerInfo.numProductPerMake;
+			}
 
 			// 材料の在庫による制約を考慮する。
 			for (Entry<ItemDef, FactoryMaterialManager> e : factoryProductManager.factoryMaterialManager.entrySet()) {
@@ -179,6 +180,41 @@ public class FactoryRoom extends ShopRoom {
 		return cfw;
 	}
 
+	public class CallForMakerInKind {
+		public ItemDef itemDef;
+		public Skill skill;
+		public double numMake;
+		public long duration;
+
+		public CallForMakerInKind(ItemDef itemDef, Skill skill, double numMake, long duration) {
+			this.itemDef = itemDef;
+			this.skill = skill;
+			this.numMake = numMake;
+			this.duration = duration;
+		}
+	}
+
+	public CallForMakerInKind GetDesiredMakerInKind(double numMakeMax) {
+		// 作るアイテムの個数を調べる。
+		double numMakableMin;
+		{
+			numMakableMin = numMakeMax;
+
+			if (this.factoryProductManager.factoryMakerManager.factoryMakerInfo.numProductPerMake < numMakableMin) {
+				numMakableMin = this.factoryProductManager.factoryMakerManager.factoryMakerInfo.numProductPerMake;
+			}
+
+			if (numMakableMin == 0) return null;
+		}
+
+		long duration = (long) (numMakableMin / this.factoryProductManager.factoryMakerManager.factoryMakerInfo.numProductPerMake * this.factoryProductManager.factoryMakerManager.factoryMakerInfo.durationForMake);
+		if (duration == 0) duration = 1L;
+
+		CallForMakerInKind cfw = new CallForMakerInKind(this.factoryProductManager.factoryProductInfo.itemDef,
+				this.factoryProductManager.factoryMakerManager.factoryMakerInfo.skill, numMakableMin, duration);
+		return cfw;
+	}
+
 	// 労働時間を返す。
 	public long GetDurationForWork() {
 		return this.factoryProductManager.factoryMakerManager.factoryMakerInfo.durationForMake;
@@ -196,12 +232,9 @@ public class FactoryRoom extends ShopRoom {
 
 	// 作業してアイテムを作る。
 	public void Make(CallForMaker cfm, long timeNow, boolean simulation) throws Exception {
-
 		this.Enter(timeNow, cfm.duration, simulation);
 
 		if (simulation == false) {
-			// makerNumMakeEvent.Put(timeNow, cfm.numMake);
-
 			// 材料を減らす。
 			for (Entry<ItemDef, FactoryMaterialManager> e : factoryProductManager.factoryMaterialManager.entrySet()) {
 				ItemDef materialItemDef = e.getKey();
@@ -220,6 +253,24 @@ public class FactoryRoom extends ShopRoom {
 			// 賃金を払う。
 			this.AddMoney(timeNow, -cfm.gain);
 		}
+	}
+
+	public Item MakeInKind(CallForMakerInKind cfm, long timeNow, boolean simulation) throws Exception {
+		this.Enter(timeNow, cfm.duration, simulation);
+
+		if (simulation == false) {
+			// 材料を減らす。
+			for (Entry<ItemDef, FactoryMaterialManager> e : factoryProductManager.factoryMaterialManager.entrySet()) {
+				ItemDef materialItemDef = e.getKey();
+				FactoryMaterialManager materialManager = e.getValue();
+				StockManager materialStockManager = this.deliverStockManager.get(materialItemDef);
+				double numUse = cfm.numMake * materialManager.factoryMaterialInfo.amount;
+				materialStockManager.Get(timeNow, numUse, simulation);
+			}
+		}
+
+		Item itemProduct = new Item(cfm.itemDef, cfm.numMake);
+		return itemProduct;
 	}
 
 	// 商品価格に対してフォードバックを与える。どのくらいの確率で選択されたか、各Humanがフィードバックを与える。

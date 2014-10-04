@@ -11,6 +11,7 @@ import vanished.Simulator.Structure.DeliverRoom;
 import vanished.Simulator.Structure.DeliverRoom.CallForItem;
 import vanished.Simulator.Structure.FactoryRoom;
 import vanished.Simulator.Structure.FactoryRoom.CallForMaker;
+import vanished.Simulator.Structure.FactoryRoom.CallForMakerInKind;
 import vanished.Simulator.Structure.Room;
 import vanished.Simulator.Structure.ShopRoom;
 import vanished.Simulator.Structure.ShopRoom.ItemCatalog;
@@ -65,10 +66,10 @@ public class HumanStatus {
 		{
 			for (int i = 0; i < 10; i++) {
 				ItemDef fish = GlobalParameter.dm.GetItemDef("fish");
-				this.utilityManager.AddUtility(fish.GetUtilities(), this.timeSimulationComplete, 0);
+				this.utilityManager.AddUtility(fish.GetUtilities(), this.timeSimulationComplete);
 
 				ItemDef water = GlobalParameter.dm.GetItemDef("water");
-				this.utilityManager.AddUtility(water.GetUtilities(), this.timeSimulationComplete, 0);
+				this.utilityManager.AddUtility(water.GetUtilities(), this.timeSimulationComplete);
 			}
 		}
 	}
@@ -337,7 +338,7 @@ public class HumanStatus {
 		// System.out.println("TryMaker");
 
 		// ランダムに労働場所を選ぶ。
-		FactoryRoom factoryRoom;
+		FactoryRoom factoryRoom = null;
 		{
 			ArrayList<FactoryRoom> list = mm.GetFactoryRoomList(this.moveMethod, HumanDef.maxMoveTimeForWork, this.currentRoom);
 			int num = list.size();
@@ -349,7 +350,7 @@ public class HumanStatus {
 		// 要求している労働者を調べる。
 		CallForMaker cfm = null;
 		{
-			cfm = factoryRoom.GetDesiredMaker();
+			cfm = factoryRoom.GetDesiredMaker(Double.MAX_VALUE);
 			if (cfm == null) throw new HumanSimulationException("TryMaker : There are no skill position in the selected factory.");
 			// 自分のスキルで実行可能か調べる。
 			if (myskill.hasAbility(cfm.skill) == false) throw new HumanSimulationException(
@@ -439,7 +440,7 @@ public class HumanStatus {
 
 	// //////////////////////////////////////////////////////////
 	// //////////////////////////////////////////////////////////
-	// アイテムを消費してみる。
+	// アイテムを消費してみる。金で買う。
 	// //////////////////////////////////////////////////////////
 	// //////////////////////////////////////////////////////////
 	public class ConsumeResult extends TryResult {
@@ -468,7 +469,6 @@ public class HumanStatus {
 			int ret = this.shopRoom.hashCode() + this.itemCatalog.itemDef.GetName().hashCode();
 			return ret;
 		}
-
 	}
 
 	public ConsumeResult TryConsume() throws Exception {
@@ -521,6 +521,99 @@ public class HumanStatus {
 
 	// //////////////////////////////////////////////////////////
 	// //////////////////////////////////////////////////////////
+	// アイテムを消費してみる。労働＋現物支給。
+	// //////////////////////////////////////////////////////////
+	// //////////////////////////////////////////////////////////
+
+	public class ConsumeWithWorkResult extends TryResult {
+		FactoryRoom factoryRoom;
+		ItemCatalog itemCatalog;
+		CallForMakerInKind cfm;
+
+		public ConsumeWithWorkResult(FactoryRoom shopRoom, ItemCatalog itemCatalog, CallForMakerInKind cfm, double moneyStart, double moneyEnd,
+				long timeStart, long timeEnd, double utilStart, double utilEnd, boolean realFlag) {
+			super(moneyStart, moneyEnd, timeStart, timeEnd, utilStart, utilEnd, realFlag);
+			this.factoryRoom = shopRoom;
+			this.itemCatalog = itemCatalog;
+			this.cfm = cfm;
+		}
+
+		@Override
+		public boolean equals(java.lang.Object obj) {
+			if (obj instanceof ConsumeWithWorkResult == false) return false;
+			ConsumeWithWorkResult res = (ConsumeWithWorkResult) obj;
+			if (this.factoryRoom == res.factoryRoom) {
+				if (this.itemCatalog.itemDef.GetName().equals(res.itemCatalog.itemDef.GetName())) {
+					if (this.cfm.itemDef.GetName().equals(res.cfm.itemDef.GetName())) { return true; }
+				}
+			}
+			return false;
+		}
+
+		@Override
+		public int hashCode() {
+			int ret = this.factoryRoom.hashCode() + this.itemCatalog.itemDef.GetName().hashCode();
+			return ret;
+		}
+	}
+
+	public ConsumeWithWorkResult TryConsumeWithWork() throws Exception {
+		// 消費する場所を決定する。
+		FactoryRoom consumeRoom;
+		if (true) {
+			ArrayList<FactoryRoom> list = mm.GetConsumableAndMakableRoomList(moveMethod, HumanDef.maxMoveTimeForEat, money, timeSimulationComplete,
+					currentRoom);
+			int num = list.size();
+			if (num == 0) throw new HumanSimulationException("TryConsume : There are no eat place to get food");
+			int index = OtherUtility.rand.nextInt(num);
+			consumeRoom = list.get(index);
+		}
+
+		// 消費するアイテムを決定する。
+		ItemCatalog consumeItemCatalog;
+		if (true) {
+			consumeItemCatalog = consumeRoom.GetProductItem(money, true);
+			if (consumeItemCatalog == null) throw new HumanSimulationException("TryConsumeWithWork : There are no eat place to get food");
+			if (consumeItemCatalog.itemDef instanceof ConsumeDef == false) throw new HumanSimulationException(
+					"TryConsumeWithWork : There are no eat place to get food");
+			if (consumeItemCatalog.lotmax < 1) throw new HumanSimulationException("TryConsumeWithWork : There are no eat place to get food");
+		}
+
+		CallForMakerInKind cfm;
+		{
+			cfm = consumeRoom.GetDesiredMakerInKind(1);
+			if (cfm == null) throw new HumanSimulationException("TryConsumeWithWork : no maker position");
+			if (this.myskill.hasAbility(cfm.skill) == false) throw new HumanSimulationException("TryConsumeWithWork : no skill");
+			if (cfm.numMake < 1) throw new HumanSimulationException("TryConsumeWithWork : no space to make 1 product");
+		}
+
+		double moneyStart = this.money;
+		long timeStart = this.timeSimulationComplete;
+		double utilStart = this.ComputeUtility();
+
+		Move(consumeRoom);
+
+		ConsumeWithMake(consumeItemCatalog, cfm, true);
+
+		double moneyEnd = this.money;
+		long timeEnd = this.timeSimulationComplete;
+		double utilEnd = this.ComputeUtility();
+
+		boolean realFlag = consumeRoom.IsReal();
+
+		ConsumeWithWorkResult res = new ConsumeWithWorkResult(consumeRoom, consumeItemCatalog, cfm, moneyStart, moneyEnd, timeStart, timeEnd,
+				utilStart, utilEnd, realFlag);
+		return res;
+	}
+
+	public void DoConsumeWithWork(ConsumeWithWorkResult res) throws Exception {
+		System.out.println(String.format("DoConsumeWithWork : Consumed %s at %s", res.itemCatalog.itemDef.GetName(), res.factoryRoom.GetName()));
+		Move(res.factoryRoom);
+		ConsumeWithMake(res.itemCatalog, res.cfm, false);
+	}
+
+	// //////////////////////////////////////////////////////////
+	// //////////////////////////////////////////////////////////
 	// 行動最小単位
 	// //////////////////////////////////////////////////////////
 	// //////////////////////////////////////////////////////////
@@ -548,11 +641,22 @@ public class HumanStatus {
 
 		long timeDelta = shopRoom.GetDurationToBuy();
 		Item item = shopRoom.BuyProductItem(this.timeSimulationComplete, this.money, itemCatalog, 1, simulation);
-		this.utilityManager.AddUtility(itemCatalog.itemDef.GetUtilities(), this.timeSimulationComplete, itemCatalog.price);
-
+		timeSimulationComplete += timeDelta;
+		this.utilityManager.AddUtility(itemCatalog.itemDef.GetUtilities(), this.timeSimulationComplete);
 		money -= itemCatalog.price * item.GetQuantity();
 
-		timeSimulationComplete += timeDelta;
+		this.utilityMovingAverage.Add(this.timeSimulationComplete, this.ComputeUtility());
+	}
+
+	public void ConsumeWithMake(ItemCatalog itemCatalog, CallForMakerInKind cfm, boolean simulation) throws Exception {
+		FactoryRoom factoryRoom = (FactoryRoom) this.currentRoom;
+
+		Item item = factoryRoom.MakeInKind(cfm, this.timeSimulationComplete, simulation);
+		this.timeSimulationComplete += cfm.duration;
+
+		long timeDelta = factoryRoom.GetDurationToBuy();
+		this.timeSimulationComplete += timeDelta;
+		this.utilityManager.AddUtility(item.GetItemDef().GetUtilities(), this.timeSimulationComplete);
 
 		this.utilityMovingAverage.Add(this.timeSimulationComplete, this.ComputeUtility());
 	}

@@ -81,6 +81,28 @@ public class MapManager {
 		return list;
 	}
 
+	public ArrayList<FactoryRoom> GetConsumableAndMakableRoomList(MoveMethod moveMethod, long maxTravelTime, double maxMoney, long timeStart,
+			Room currentRoom) {
+		ArrayList<FactoryRoom> list = new ArrayList<FactoryRoom>();
+		for (Building building : buildingList) {
+			for (Room room : building.GetRoomList()) {
+				if (room instanceof FactoryRoom) {
+					FactoryRoom factoryRoom = (FactoryRoom) room;
+
+					long travelTime = this.GetTravelTime(moveMethod, room.GetParentBuilding(), currentRoom.GetParentBuilding());
+					if (travelTime > maxTravelTime) continue;
+
+					ItemCatalog ic = factoryRoom.GetProductItem(maxMoney, true);
+					if (ic == null) continue;
+					if (ic.itemDef instanceof ConsumeDef == false) continue;
+
+					list.add(factoryRoom);
+				}
+			}
+		}
+		return list;
+	}
+
 	public ArrayList<DeliverRoom> GetDeliverableRoomList(MoveMethod moveMethod, long maxTravelTime, Room currentRoom) {
 		ArrayList<DeliverRoom> list = new ArrayList<DeliverRoom>();
 		for (Building building : buildingList) {
@@ -192,7 +214,7 @@ public class MapManager {
 					long travelTime = this.GetTravelTime(moveMethod, room, currentRoom);
 					if (travelTime > maxTravelTime) continue;
 
-					CallForMaker cfm = factoryRoom.GetDesiredMaker();
+					CallForMaker cfm = factoryRoom.GetDesiredMaker(Double.MAX_VALUE);
 					if (cfm == null) continue;
 
 					list.add(factoryRoom);
@@ -209,7 +231,7 @@ public class MapManager {
 				if (room instanceof FactoryRoom) {
 					FactoryRoom factoryRoom = (FactoryRoom) room;
 
-					CallForMaker cfm = factoryRoom.GetDesiredMaker();
+					CallForMaker cfm = factoryRoom.GetDesiredMaker(Double.MAX_VALUE);
 					if (cfm == null) continue;
 
 					if (skill.hasAbility(cfm.skill) == false) continue;

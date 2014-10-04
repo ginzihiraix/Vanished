@@ -21,19 +21,16 @@ public class UtilityManager {
 	TreeMap<UtilityDuration, UtilityLog> exponentialMovingAverageLog = new TreeMap<UtilityDuration, UtilityLog>();
 
 	public class UtilityLog {
-		ExponentialMovingAverage priceAverage = new ExponentialMovingAverage(60 * 24 * 365, true);
 		ExponentialMovingAverage utilityAverage = new ExponentialMovingAverage(60 * 24 * 365, false);
 
 		public UtilityLog() {
 		}
 
 		public UtilityLog(UtilityLog ul) {
-			this.priceAverage = new ExponentialMovingAverage(ul.priceAverage);
 			this.utilityAverage = new ExponentialMovingAverage(ul.utilityAverage);
 		}
 
-		public void Put(long timeNow, double price, double utility) {
-			priceAverage.Add(timeNow, price);
+		public void Put(long timeNow, double utility) {
 			utilityAverage.Add(timeNow, utility);
 		}
 	}
@@ -96,7 +93,7 @@ public class UtilityManager {
 			}
 		}
 
-		public void AddUtility(ArrayList<Utility> utilities, long timeNow, double price) throws Exception {
+		public void AddUtility(ArrayList<Utility> utilities, long timeNow) throws Exception {
 			for (Utility utility : utilities) {
 				EachConfigUtility uec = umap.get(utility);
 				if (uec == null) {
@@ -150,7 +147,7 @@ public class UtilityManager {
 		return total;
 	}
 
-	public void AddUtility(ArrayList<Utility> utilities, long timeNow, double price) throws Exception {
+	public void AddUtility(ArrayList<Utility> utilities, long timeNow) throws Exception {
 
 		if (utilities.size() == 0) return;
 
@@ -161,7 +158,7 @@ public class UtilityManager {
 				cu = new CategoryUtility();
 				this.categoryUtility.put(utility.category, cu);
 			}
-			cu.AddUtility(utilities, timeNow, price);
+			cu.AddUtility(utilities, timeNow);
 		}
 
 		{
@@ -172,7 +169,7 @@ public class UtilityManager {
 				this.exponentialMovingAverageLog.put(utility.duration, ul);
 			}
 			double u = this.ComputeUtility(timeNow);
-			ul.Put(timeNow, price, u);
+			ul.Put(timeNow, u);
 		}
 	}
 }

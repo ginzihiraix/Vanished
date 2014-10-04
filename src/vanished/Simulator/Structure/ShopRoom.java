@@ -1,11 +1,8 @@
 package vanished.Simulator.Structure;
 
-import java.util.ArrayList;
-
 import vanished.Simulator.ExponentialMovingAverage;
 import vanished.Simulator.HumanSimulationException;
 import vanished.Simulator.OtherUtility;
-import vanished.Simulator.EventLogManager.EventLog;
 import vanished.Simulator.Item.Item;
 import vanished.Simulator.Item.ItemDef;
 

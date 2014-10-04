@@ -46,18 +46,18 @@ public class SimulationMain extends Thread {
 				UtilityManager um = new UtilityManager();
 				System.out.println(um.ComputeUtility(0));
 				ItemDef fish = GlobalParameter.dm.GetItemDef("fish");
-				um.AddUtility(fish.GetUtilities(), 100, 500);
+				um.AddUtility(fish.GetUtilities(), 100);
 				System.out.println(um.ComputeUtility(100));
 				ItemDef water = GlobalParameter.dm.GetItemDef("water");
-				um.AddUtility(water.GetUtilities(), 100, 100);
+				um.AddUtility(water.GetUtilities(), 100);
 				System.out.println(um.ComputeUtility(100));
-				um.AddUtility(fish.GetUtilities(), 100, 100);
+				um.AddUtility(fish.GetUtilities(), 100);
 				System.out.println(um.ComputeUtility(100));
-				um.AddUtility(fish.GetUtilities(), 100, 100);
+				um.AddUtility(fish.GetUtilities(), 100);
 				System.out.println(um.ComputeUtility(100));
-				um.AddUtility(fish.GetUtilities(), 100, 100);
+				um.AddUtility(fish.GetUtilities(), 100);
 				System.out.println(um.ComputeUtility(100));
-				um.AddUtility(fish.GetUtilities(), 100, 100);
+				um.AddUtility(fish.GetUtilities(), 100);
 				System.out.println(um.ComputeUtility(100));
 			}
 
@@ -115,7 +115,7 @@ public class SimulationMain extends Thread {
 					timeLast100day = timeNow;
 
 					// ユーティリティの高い人は、子供を生む（分裂する）
-					{
+					if (false) {
 						ArrayList<Human> nh = new ArrayList<Human>();
 						for (Human human : humanManager.humans) {
 							Human h = human.Birth();
@@ -126,7 +126,7 @@ public class SimulationMain extends Thread {
 					}
 
 					// 年をとってる人、ユーティリティの低い人は、死ぬ。
-					{
+					if (false) {
 						ArrayList<Human> nh = new ArrayList<Human>();
 						for (Human human : humanManager.humans) {
 							boolean flagDeath = human.Death();
@@ -137,7 +137,7 @@ public class SimulationMain extends Thread {
 					}
 
 					// 一定期間たっているにも関わらず、黒字転換していない建物は壊す。
-					{
+					if (false) {
 						ArrayList<Building> alive = new ArrayList<Building>();
 						for (Building building : mapManager.buildingList) {
 							if (building.IsInitialCostRecovered(timeNow) == false) continue;
