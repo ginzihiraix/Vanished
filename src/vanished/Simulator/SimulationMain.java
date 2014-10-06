@@ -15,15 +15,15 @@ public class SimulationMain extends Thread {
 		mapManager = new MapManager();
 
 		{
-			mapManager.CreateBuilding(new Building(0, GlobalParameter.dm.GetBuilding("伐採場"), new Location(0, 0), 0, true));
-			mapManager.CreateBuilding(new Building(0, GlobalParameter.dm.GetBuilding("伐採場"), new Location(1, 1), 0, true));
-			mapManager.CreateBuilding(new Building(0, GlobalParameter.dm.GetBuilding("採石場"), new Location(2, 2), 0, true));
-			mapManager.CreateBuilding(new Building(0, GlobalParameter.dm.GetBuilding("採石場"), new Location(3, 3), 0, true));
-			mapManager.CreateBuilding(new Building(0, GlobalParameter.dm.GetBuilding("水汲み場"), new Location(4, 4), 0, false));
+			// mapManager.CreateBuilding(new Building(0, GlobalParameter.dm.GetBuilding("伐採場"), new Location(0, 0), 0, true));
+			// mapManager.CreateBuilding(new Building(0, GlobalParameter.dm.GetBuilding("伐採場"), new Location(1, 1), 0, true));
+			// mapManager.CreateBuilding(new Building(0, GlobalParameter.dm.GetBuilding("採石場"), new Location(2, 2), 0, true));
+			// mapManager.CreateBuilding(new Building(0, GlobalParameter.dm.GetBuilding("採石場"), new Location(3, 3), 0, true));
+			// mapManager.CreateBuilding(new Building(0, GlobalParameter.dm.GetBuilding("水汲み場"), new Location(4, 4), 0, false));
 			mapManager.CreateBuilding(new Building(0, GlobalParameter.dm.GetBuilding("水汲み場"), new Location(5, 5), 0, true));
 			mapManager.CreateBuilding(new Building(0, GlobalParameter.dm.GetBuilding("釣り場"), new Location(6, 6), 0, true));
-			mapManager.CreateBuilding(new Building(0, GlobalParameter.dm.GetBuilding("釣り場"), new Location(7, 7), 0, true));
-			mapManager.CreateBuilding(new Building(0, GlobalParameter.dm.GetBuilding("ソーセージ工場"), new Location(8, 8), 0, true));
+			// mapManager.CreateBuilding(new Building(0, GlobalParameter.dm.GetBuilding("釣り場"), new Location(7, 7), 0, true));
+			// mapManager.CreateBuilding(new Building(0, GlobalParameter.dm.GetBuilding("ソーセージ工場"), new Location(8, 8), 0, true));
 		}
 
 		humanManager = new HumanManager(mapManager);
@@ -31,7 +31,6 @@ public class SimulationMain extends Thread {
 
 	public void run() {
 		try {
-
 			System.out.println(System.getProperty("file.encoding"));
 
 			System.out.println("===Start===");
@@ -87,7 +86,7 @@ public class SimulationMain extends Thread {
 					}
 				}
 
-				if (timeNow - timeLast7day >= 60 * 24 * 7) {
+				if (timeNow - timeLast7day >= 60 * 24 * 30) {
 					timeLast7day = timeNow;
 
 					// 建設完了している建物は、建築完了フラグを立てる。

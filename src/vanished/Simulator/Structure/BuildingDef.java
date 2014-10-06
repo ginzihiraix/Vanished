@@ -10,6 +10,8 @@ public class BuildingDef extends ObjectDef {
 	// –¼‘O
 	String name;
 
+	public boolean nobuildFlag = false;
+
 	// ƒrƒ‹ŒšİŒ»ê
 	FactoryRoomDef buildRoomDef;
 
@@ -36,6 +38,13 @@ public class BuildingDef extends ObjectDef {
 			RoomDef roomDef = GlobalParameter.dm.GetRoomDef(roomname);
 			for (int i = 0; i < num; i++) {
 				roomdefList.add(roomDef);
+			}
+		}
+
+		{
+			String temp = p.getProperty("nobuild");
+			if (temp != null) {
+				nobuildFlag = Boolean.parseBoolean(temp);
 			}
 		}
 

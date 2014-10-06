@@ -90,7 +90,8 @@ public class FactoryRoom extends ShopRoom {
 			for (Entry<ItemDef, FactoryMaterialManager> e2 : this.factoryProductManager.factoryMaterialManager.entrySet()) {
 				ItemDef materialItemDef = e2.getKey();
 				FactoryMaterialManager fmm = e2.getValue();
-				double cost = this.GetDesiredItem(materialItemDef).price * fmm.factoryMaterialInfo.amount;
+				double cost = this.GetDesiredItemWithNewPrice(materialItemDef, Double.MAX_VALUE, Double.MAX_VALUE).price
+						* fmm.factoryMaterialInfo.amount;
 				costMaterialTotal += cost;
 			}
 
@@ -134,35 +135,12 @@ public class FactoryRoom extends ShopRoom {
 	public CallForMaker GetDesiredMaker(double numMakeMax) {
 
 		// 作るアイテムの個数を調べる。
-		double numMakableMin;
+		double numMakableMin = Double.MAX_VALUE;
 		{
-			numMakableMin = numMakeMax;
+			if (numMakeMax < numMakableMin) numMakableMin = numMakeMax;
 
 			if (this.factoryProductManager.factoryMakerManager.factoryMakerInfo.numProductPerMake < numMakableMin) {
 				numMakableMin = this.factoryProductManager.factoryMakerManager.factoryMakerInfo.numProductPerMake;
-			}
-
-			// 材料の在庫による制約を考慮する。
-			for (Entry<ItemDef, FactoryMaterialManager> e : factoryProductManager.factoryMaterialManager.entrySet()) {
-				ItemDef materialItemDef = e.getKey();
-				FactoryMaterialManager materialManager = e.getValue();
-
-				StockManager materialStockManager = this.deliverStockManager.get(materialItemDef);
-				double numStock = materialStockManager.GetNumStock();
-
-				double numMakable = numStock / materialManager.factoryMaterialInfo.amount;
-
-				if (numMakable < numMakableMin) {
-					numMakableMin = numMakable;
-				}
-			}
-
-			// 製品の在庫の上限を考慮する。
-			{
-				double numMakable = shopStockManager.FindStockSpace();
-				if (numMakable < numMakableMin) {
-					numMakableMin = numMakable;
-				}
 			}
 
 			if (numMakableMin == 0) return null;
@@ -195,10 +173,14 @@ public class FactoryRoom extends ShopRoom {
 	}
 
 	public CallForMakerInKind GetDesiredMakerInKind(double numMakeMax) {
+
+		// 材料を必要とする場所は、InKindできない。
+		if (this.factoryProductManager.factoryMaterialManager.size() > 0) return null;
+
 		// 作るアイテムの個数を調べる。
-		double numMakableMin;
+		double numMakableMin = Double.MAX_VALUE;
 		{
-			numMakableMin = numMakeMax;
+			if (numMakeMax < numMakableMin) numMakableMin = numMakeMax;
 
 			if (this.factoryProductManager.factoryMakerManager.factoryMakerInfo.numProductPerMake < numMakableMin) {
 				numMakableMin = this.factoryProductManager.factoryMakerManager.factoryMakerInfo.numProductPerMake;
@@ -215,11 +197,6 @@ public class FactoryRoom extends ShopRoom {
 		return cfw;
 	}
 
-	// 労働時間を返す。
-	public long GetDurationForWork() {
-		return this.factoryProductManager.factoryMakerManager.factoryMakerInfo.durationForMake;
-	}
-
 	public class MakeResult {
 		public double gain;
 		public long duration;
@@ -234,6 +211,11 @@ public class FactoryRoom extends ShopRoom {
 	public void Make(CallForMaker cfm, long timeNow, boolean simulation) throws Exception {
 		this.Enter(timeNow, cfm.duration, simulation);
 
+		// 製品を増やす。
+		{
+			shopStockManager.Put(timeNow, cfm.numMake, simulation);
+		}
+
 		if (simulation == false) {
 			// 材料を減らす。
 			for (Entry<ItemDef, FactoryMaterialManager> e : factoryProductManager.factoryMaterialManager.entrySet()) {
@@ -242,12 +224,6 @@ public class FactoryRoom extends ShopRoom {
 				StockManager materialStockManager = this.deliverStockManager.get(materialItemDef);
 				double numUse = cfm.numMake * materialManager.factoryMaterialInfo.amount;
 				materialStockManager.Get(timeNow, numUse, simulation);
-			}
-
-			// 製品を増やす。
-			{
-				Item itemProduct = new Item(cfm.itemDef, cfm.numMake);
-				shopStockManager.Put(timeNow, itemProduct, simulation);
 			}
 
 			// 賃金を払う。
@@ -269,6 +245,7 @@ public class FactoryRoom extends ShopRoom {
 			}
 		}
 
+		// 現物を返す。
 		Item itemProduct = new Item(cfm.itemDef, cfm.numMake);
 		return itemProduct;
 	}
@@ -308,11 +285,10 @@ public class FactoryRoom extends ShopRoom {
 		if (this.forBuilding == true) {
 			durationFutureTarget = 60L * 24L * 30L;
 		} else {
-			durationFutureTarget = 60L * 24L * 365L * 10L * 1000L;
+			durationFutureTarget = 60L * 24L * 30L;
 		}
 
 		double productStock = this.shopStockManager.GetNumStock();
-		double productCapacity = this.shopStockManager.GetCapacity();
 
 		{
 			double gainGlobal = -Double.MAX_VALUE;
@@ -347,11 +323,10 @@ public class FactoryRoom extends ShopRoom {
 
 						StockManager msm = this.deliverStockManager.get(materialItemDef);
 						double materialStock = msm.GetNumStock();
-						double materialCapacity = msm.GetCapacity();
 						double numMaterialTarget;
 						if (this.forBuilding == false) {
-							numMaterialTarget = procutFeedback.quantityTotal * fmm.factoryMaterialInfo.amount
-									+ (materialCapacity / 2 - materialStock) / durationFutureTarget * duration;
+							numMaterialTarget = procutFeedback.quantityTotal * fmm.factoryMaterialInfo.amount - materialStock / durationFutureTarget
+									* duration;
 						} else {
 							numMaterialTarget = 1.0 * fmm.factoryMaterialInfo.amount / durationFutureTarget * duration;
 						}
@@ -380,7 +355,7 @@ public class FactoryRoom extends ShopRoom {
 				{
 					double numMakerTarget;
 					if (this.forBuilding == false) {
-						numMakerTarget = (procutFeedback.quantityTotal + (productCapacity / 2 - productStock) / durationFutureTarget * duration)
+						numMakerTarget = (procutFeedback.quantityTotal - productStock / durationFutureTarget * duration)
 								/ this.factoryProductManager.factoryMakerManager.factoryMakerInfo.numProductPerMake;
 					} else {
 						numMakerTarget = (1.0 / durationFutureTarget * duration)

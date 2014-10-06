@@ -5,7 +5,6 @@ import java.util.Map.Entry;
 import java.util.TreeMap;
 
 import vanished.Simulator.OtherUtility;
-import vanished.Simulator.Item.Item;
 import vanished.Simulator.Item.ItemDef;
 import vanished.Simulator.Item.ItemDefComparator;
 
@@ -40,55 +39,80 @@ public class DeliverRoom extends Room {
 	public class CallForItem {
 		public ItemDef itemDef;
 		public double price;
-		public double lotmax;
+		public double numPick;
+		public long durationToSell;
 
-		public CallForItem(ItemDef itemDef, double price, double lotmax) {
+		public CallForItem(ItemDef itemDef, double price, double numPick, long durationToSell) {
 			this.itemDef = itemDef;
 			this.price = price;
-			this.lotmax = lotmax;
+			this.numPick = numPick;
+			this.durationToSell = durationToSell;
 		}
 	}
 
-	// 買取アイテム一覧を取得する。稼動してるかどうかは気にしない。
-	public ArrayList<CallForItem> GetDesiredItemList() {
+	// 買取アイテム一覧を取得する。
+	public ArrayList<CallForItem> GetDesiredItemList(double maxMoney, double maxNumPick) {
 		ArrayList<CallForItem> callForItemList = new ArrayList<CallForItem>();
 
 		// 欲しいアイテムリストを返す。
 		for (Entry<ItemDef, StockManager> e : deliverStockManager.entrySet()) {
 			ItemDef itemDef = e.getKey();
-			StockManager sm = e.getValue();
-			double lotmax = sm.GetCurrentMaxLot();
-			double price = sm.price * Math.pow(1.02, OtherUtility.rand.nextInt(11) - 11 / 2);
-			CallForItem callForItem = new CallForItem(itemDef, price, lotmax);
+			CallForItem callForItem = this.GetDesiredItemWithNewPrice(itemDef, maxMoney, maxNumPick);
 			callForItemList.add(callForItem);
 		}
 		return callForItemList;
 	}
 
-	// 買い取り情報を取得する。稼動してるかどうかは気にしない。
-	public CallForItem GetDesiredItem(ItemDef itemDef) {
+	// 買い取り情報を取得する。
+	private CallForItem GetDesiredItem(ItemDef itemDef, double maxMoney, double maxNumPick, double price) {
+		DeliverRoomDef deliverRoomDef = (DeliverRoomDef) roomDef;
+
 		StockManager sm = deliverStockManager.get(itemDef);
-		double lotmax = sm.GetCurrentMaxLot();
-		double price = sm.price * Math.pow(1.02, OtherUtility.rand.nextInt(11) - 11 / 2);
-		CallForItem callForItem = new CallForItem(itemDef, price, lotmax);
+		if (sm == null) return null;
+
+		// 購入する個数を決定する。
+		double minNumPick = Double.MAX_VALUE;
+		{
+			// 希望の納品数による制約
+			if (maxNumPick < minNumPick) minNumPick = maxNumPick;
+
+			// 一回に運び込める量による制約
+			if (sm.stockManagerInfo.lotmax < minNumPick) minNumPick = sm.stockManagerInfo.lotmax;
+
+			// 価格による制約
+			double numPickForMoney = maxMoney / price;
+			if (numPickForMoney < minNumPick) minNumPick = numPickForMoney;
+		}
+
+		// 購入時間を計算する。個数に比例する。
+		long durationToSell = (long) (deliverRoomDef.durationForDeliver * minNumPick) + 1L;
+
+		CallForItem callForItem = new CallForItem(itemDef, price, minNumPick, durationToSell);
 		return callForItem;
 	}
 
-	// アイテムを売るために必要な所要時間を取得する。
-	public long GetDurationToSell(ItemDef itemDef) {
-		DeliverRoomDef deliverRoomDef = (DeliverRoomDef) roomDef;
-		return deliverRoomDef.durationForDeliver;
+	public CallForItem GetDesiredItemWithNewPrice(ItemDef itemDef, double maxMoney, double maxNumPick) {
+		StockManager sm = deliverStockManager.get(itemDef);
+		if (sm == null) return null;
+		// 価格を決定する。
+		double price = sm.price * Math.pow(1.02, OtherUtility.rand.nextInt(11) - 11 / 2);
+		return this.GetDesiredItem(itemDef, maxMoney, maxNumPick, price);
+	}
+
+	public CallForItem GetDesiredItemWithFixedPrice(ItemDef itemDef, double maxMoney, double maxNumPick, double price) {
+		return GetDesiredItem(itemDef, maxMoney, maxNumPick, price);
 	}
 
 	// アイテムを売る。
-	public void SellItem(long timeNow, Item item, double price, boolean simulation) throws Exception {
+	public void SellItem(long timeNow, CallForItem callForItem, boolean simulation) throws Exception {
+
 		// アイテムを格納する。
-		StockManager sm = deliverStockManager.get(item.GetItemDef());
-		sm.Put(timeNow, item, simulation);
+		StockManager sm = deliverStockManager.get(callForItem.itemDef);
+		sm.Put(timeNow, callForItem.numPick, simulation);
 
 		if (simulation == false) {
 			// 金を払う。
-			this.AddMoney(timeNow, -price * item.GetQuantity());
+			this.AddMoney(timeNow, -callForItem.price * callForItem.numPick);
 		}
 	}
 

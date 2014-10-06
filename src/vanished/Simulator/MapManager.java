@@ -11,6 +11,7 @@ import vanished.Simulator.Structure.DeliverRoom;
 import vanished.Simulator.Structure.DeliverRoom.CallForItem;
 import vanished.Simulator.Structure.FactoryRoom;
 import vanished.Simulator.Structure.FactoryRoom.CallForMaker;
+import vanished.Simulator.Structure.FactoryRoom.CallForMakerInKind;
 import vanished.Simulator.Structure.Room;
 import vanished.Simulator.Structure.ShopRoom;
 import vanished.Simulator.Structure.ShopRoom.ItemCatalog;
@@ -60,60 +61,22 @@ public class MapManager {
 		return list;
 	}
 
-	public ArrayList<ShopRoom> GetConsumableRoomList(MoveMethod moveMethod, long maxTravelTime, double maxMoney, long timeStart, Room currentRoom) {
-		ArrayList<ShopRoom> list = new ArrayList<ShopRoom>();
-		for (Building building : buildingList) {
-			for (Room room : building.GetRoomList()) {
-				if (room instanceof ShopRoom) {
-					ShopRoom shopRoom = (ShopRoom) room;
-
-					long travelTime = this.GetTravelTime(moveMethod, room.GetParentBuilding(), currentRoom.GetParentBuilding());
-					if (travelTime > maxTravelTime) continue;
-
-					ItemCatalog ic = shopRoom.GetProductItem(maxMoney, true);
-					if (ic == null) continue;
-					if (ic.itemDef instanceof ConsumeDef == false) continue;
-
-					list.add(shopRoom);
-				}
-			}
-		}
-		return list;
-	}
-
-	public ArrayList<FactoryRoom> GetConsumableAndMakableRoomList(MoveMethod moveMethod, long maxTravelTime, double maxMoney, long timeStart,
-			Room currentRoom) {
-		ArrayList<FactoryRoom> list = new ArrayList<FactoryRoom>();
-		for (Building building : buildingList) {
-			for (Room room : building.GetRoomList()) {
-				if (room instanceof FactoryRoom) {
-					FactoryRoom factoryRoom = (FactoryRoom) room;
-
-					long travelTime = this.GetTravelTime(moveMethod, room.GetParentBuilding(), currentRoom.GetParentBuilding());
-					if (travelTime > maxTravelTime) continue;
-
-					ItemCatalog ic = factoryRoom.GetProductItem(maxMoney, true);
-					if (ic == null) continue;
-					if (ic.itemDef instanceof ConsumeDef == false) continue;
-
-					list.add(factoryRoom);
-				}
-			}
-		}
-		return list;
-	}
-
-	public ArrayList<DeliverRoom> GetDeliverableRoomList(MoveMethod moveMethod, long maxTravelTime, Room currentRoom) {
+	public ArrayList<DeliverRoom> GetDeliverableRoomList(MoveMethod moveMethod, long maxTravelTime, Room currentRoom, double maxMoney,
+			double maxNumPickup, boolean realOnlyFlag) {
 		ArrayList<DeliverRoom> list = new ArrayList<DeliverRoom>();
 		for (Building building : buildingList) {
 			for (Room room : building.GetRoomList()) {
+				if (realOnlyFlag == true) {
+					if (room.IsReal() == false) continue;
+				}
+
 				if (room instanceof DeliverRoom) {
 					DeliverRoom deliverableRoom = (DeliverRoom) room;
 
 					long travelTime = this.GetTravelTime(moveMethod, room, currentRoom);
 					if (travelTime > maxTravelTime) continue;
 
-					ArrayList<CallForItem> itemDefList = deliverableRoom.GetDesiredItemList();
+					ArrayList<CallForItem> itemDefList = deliverableRoom.GetDesiredItemList(maxMoney, maxNumPickup);
 					if (itemDefList.size() == 0) continue;
 
 					list.add(deliverableRoom);
@@ -123,17 +86,22 @@ public class MapManager {
 		return list;
 	}
 
-	public ArrayList<DeliverRoom> GetDeliverableRoomList(MoveMethod moveMethod, long maxTravelTime, Room currentRoom, ItemDef deliverItem) {
+	public ArrayList<DeliverRoom> GetDeliverableRoomList(MoveMethod moveMethod, long maxTravelTime, Room currentRoom, ItemDef deliverItem,
+			double maxMoney, double maxNumPick, boolean realOnlyFlag) {
 		ArrayList<DeliverRoom> list = new ArrayList<DeliverRoom>();
 		for (Building building : buildingList) {
 			for (Room room : building.GetRoomList()) {
+				if (realOnlyFlag == true) {
+					if (room.IsReal() == false) continue;
+				}
+
 				if (room instanceof DeliverRoom) {
 					DeliverRoom deliverableRoom = (DeliverRoom) room;
 
 					long travelTime = this.GetTravelTime(moveMethod, room.GetParentBuilding(), currentRoom.GetParentBuilding());
 					if (travelTime > maxTravelTime) continue;
 
-					if (deliverableRoom.GetDesiredItem(deliverItem) == null) continue;
+					if (deliverableRoom.GetDesiredItemWithNewPrice(deliverItem, maxMoney, maxNumPick) == null) continue;
 
 					list.add(deliverableRoom);
 				}
@@ -142,17 +110,48 @@ public class MapManager {
 		return list;
 	}
 
-	public ArrayList<ShopRoom> GetShopRoomList(MoveMethod moveMethod, long maxTravelTime, double maxMoney, Room currentRoom) {
+	public ArrayList<ShopRoom> GetShopRoomList(MoveMethod moveMethod, long maxTravelTime, Room currentRoom, ItemDef desiredItem, double maxMoney,
+			double maxNumPick, boolean realOnlyFlag) {
 		ArrayList<ShopRoom> list = new ArrayList<ShopRoom>();
 		for (Building building : buildingList) {
 			for (Room room : building.GetRoomList()) {
+				if (realOnlyFlag == true) {
+					if (room.IsReal() == false) continue;
+				}
+
 				if (room instanceof ShopRoom) {
 					ShopRoom shopRoom = (ShopRoom) room;
 
 					long travelTime = this.GetTravelTime(moveMethod, room, currentRoom);
 					if (travelTime > maxTravelTime) continue;
 
-					ItemCatalog ic = shopRoom.GetProductItem(maxMoney, true);
+					ItemCatalog ic = shopRoom.GetProductItemForConsumeWithNewPrice(maxMoney, maxNumPick);
+					if (ic == null) continue;
+					if (ic.itemDef != desiredItem) continue;
+
+					list.add(shopRoom);
+				}
+			}
+		}
+		return list;
+	}
+
+	public ArrayList<ShopRoom> GetShopRoomList(MoveMethod moveMethod, long maxTravelTime, Room currentRoom, double maxMoney, double maxNumPick,
+			boolean realOnlyFlag) {
+		ArrayList<ShopRoom> list = new ArrayList<ShopRoom>();
+		for (Building building : buildingList) {
+			for (Room room : building.GetRoomList()) {
+				if (realOnlyFlag == true) {
+					if (room.IsReal() == false) continue;
+				}
+
+				if (room instanceof ShopRoom) {
+					ShopRoom shopRoom = (ShopRoom) room;
+
+					long travelTime = this.GetTravelTime(moveMethod, room, currentRoom);
+					if (travelTime > maxTravelTime) continue;
+
+					ItemCatalog ic = shopRoom.GetProductItemForConsumeWithNewPrice(maxMoney, maxNumPick);
 					if (ic == null) continue;
 
 					list.add(shopRoom);
@@ -162,20 +161,24 @@ public class MapManager {
 		return list;
 	}
 
-	public ArrayList<ShopRoom> GetShopRoomList(MoveMethod moveMethod, long maxTravelTime, double maxMoney, Room currentRoom, ItemDef desiredItem,
+	public ArrayList<ShopRoom> GetConsumableRoomList(MoveMethod moveMethod, long maxTravelTime, Room currentRoom, double maxMoney, double maxNumPick,
 			boolean realOnlyFlag) {
 		ArrayList<ShopRoom> list = new ArrayList<ShopRoom>();
 		for (Building building : buildingList) {
 			for (Room room : building.GetRoomList()) {
-				if (realOnlyFlag == true && room.IsReal() == false) continue;
+				if (realOnlyFlag == true) {
+					if (room.IsReal() == false) continue;
+				}
 
 				if (room instanceof ShopRoom) {
 					ShopRoom shopRoom = (ShopRoom) room;
 
-					long travelTime = this.GetTravelTime(moveMethod, room, currentRoom);
+					long travelTime = this.GetTravelTime(moveMethod, room.GetParentBuilding(), currentRoom.GetParentBuilding());
 					if (travelTime > maxTravelTime) continue;
 
-					if (shopRoom.GetProductItem(maxMoney, true, desiredItem) == null) continue;
+					ItemCatalog ic = shopRoom.GetProductItemForConsumeWithNewPrice(maxMoney, maxNumPick);
+					if (ic == null) continue;
+					if (ic.itemDef instanceof ConsumeDef == false) continue;
 
 					list.add(shopRoom);
 				}
@@ -184,31 +187,44 @@ public class MapManager {
 		return list;
 	}
 
-	public double FindMinPrice(ItemDef desiredItem, boolean checkStock) {
-		double min = Double.MAX_VALUE;
-
+	public ArrayList<FactoryRoom> GetConsumableAndMakableRoomList(MoveMethod moveMethod, long maxTravelTime, Room currentRoom, double maxMoney,
+			double maxNumPick, boolean realOnlyFlag) {
+		ArrayList<FactoryRoom> list = new ArrayList<FactoryRoom>();
 		for (Building building : buildingList) {
 			for (Room room : building.GetRoomList()) {
-				if (room instanceof ShopRoom) {
-					ShopRoom shopRoom = (ShopRoom) room;
-					ItemCatalog catalog = shopRoom.GetProductItem(Double.MAX_VALUE, checkStock, desiredItem);
-					if (catalog == null) continue;
+				if (realOnlyFlag == true) {
+					if (room.IsReal() == false) continue;
+				}
 
-					if (catalog.price < min) {
-						min = catalog.price;
-					}
+				if (room instanceof FactoryRoom) {
+					FactoryRoom factoryRoom = (FactoryRoom) room;
+
+					long travelTime = this.GetTravelTime(moveMethod, room.GetParentBuilding(), currentRoom.GetParentBuilding());
+					if (travelTime > maxTravelTime) continue;
+
+					ItemCatalog ic = factoryRoom.GetProductItemForConsumeWithNewPrice(maxMoney, maxNumPick);
+					if (ic == null) continue;
+					if (ic.itemDef instanceof ConsumeDef == false) continue;
+
+					CallForMakerInKind cfm = factoryRoom.GetDesiredMakerInKind(maxNumPick);
+					if (cfm == null) continue;
+
+					list.add(factoryRoom);
 				}
 			}
 		}
-
-		return min;
+		return list;
 	}
 
-	public ArrayList<FactoryRoom> GetFactoryRoomList(MoveMethod moveMethod, long maxTravelTime, Room currentRoom) {
+	public ArrayList<FactoryRoom> GetFactoryRoomList(MoveMethod moveMethod, long maxTravelTime, Room currentRoom, boolean realOnlyFlag) {
 		ArrayList<FactoryRoom> list = new ArrayList<FactoryRoom>();
 		for (Building building : buildingList) {
 			for (Room room : building.GetRoomList()) {
 				if (room instanceof FactoryRoom) {
+					if (realOnlyFlag == true) {
+						if (room.IsReal() == false) continue;
+					}
+
 					FactoryRoom factoryRoom = (FactoryRoom) room;
 
 					long travelTime = this.GetTravelTime(moveMethod, room, currentRoom);
@@ -224,7 +240,7 @@ public class MapManager {
 		return list;
 	}
 
-	public ArrayList<FactoryRoom> GetFactoryRoomList(Skill skill) {
+	private ArrayList<FactoryRoom> GetFactoryRoomList(Skill skill) {
 		ArrayList<FactoryRoom> list = new ArrayList<FactoryRoom>();
 		for (Building building : buildingList) {
 			for (Room room : building.GetRoomList()) {
@@ -243,14 +259,4 @@ public class MapManager {
 		return list;
 	}
 
-	// public ArrayList<Building> GetNotCompletedBuildingList(MoveMethod moveMethod, long maxTravelTime, Room currentRoom) {
-	// ArrayList<Building> list = new ArrayList<Building>();
-	// for (Building building : buildingList) {
-	// long travelTime = this.GetTravelTime(moveMethod, building, currentRoom.GetParentBuilding());
-	// if (travelTime > maxTravelTime) continue;
-	// if (building.IsBuildCompleted() == true) continue;
-	// list.add(building);
-	// }
-	// return list;
-	// }
 }

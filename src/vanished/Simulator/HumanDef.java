@@ -25,7 +25,7 @@ public class HumanDef {
 	static double funDecreaseSpeedPerMin = 1.0 / (48 * 60);
 
 	// eat‚Ì‚½‚ß‚ÉˆÚ“®‚·‚é‚Æ‚«‚ÌAÅ‘åˆÚ“®ŠÔB
-	static long maxMoveTimeForEat = 60 * 2;
+	static long maxMoveTimeForConsume = 60 * 2;
 
 	// Trade‚Ì‚½‚ß‚ÉˆÚ“®‚·‚é‚Æ‚«‚ÌAÅ‘åˆÚ“®ŠÔ
 	static long maxMoveTimeForTrade = 60 * 6;

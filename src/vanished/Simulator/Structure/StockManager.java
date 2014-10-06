@@ -1,7 +1,6 @@
 package vanished.Simulator.Structure;
 
 import vanished.Simulator.ExponentialMovingAverage;
-import vanished.Simulator.Inventory;
 import vanished.Simulator.OtherUtility;
 import vanished.Simulator.Item.Item;
 import vanished.Simulator.Item.ItemDef;
@@ -14,60 +13,36 @@ public class StockManager {
 
 	double price;
 
-	private Inventory inventory;
+	private double numStock;
 
 	public StockManager(ItemDef itemDef, StockManagerInfo stockManagerInfo) {
 		this.itemDef = itemDef;
 		this.stockManagerInfo = stockManagerInfo;
 		price = 1 + OtherUtility.RandGaussian() * 0.1;
-		inventory = new Inventory(stockManagerInfo.capacity * itemDef.GetWeight());
-	}
-
-	public double GetCapacity() {
-		double ret = inventory.GetCapacity() / itemDef.GetWeight();
-		return ret;
-	}
-
-	public double FindStockSpace() {
-		return this.inventory.FindSpace(itemDef);
 	}
 
 	public double GetNumStock() {
-		return this.inventory.GetNumStock(itemDef);
+		return numStock;
 	}
 
 	public Item Get(long timeNow, double numPick, boolean simulation) throws Exception {
-		Item ret;
 		if (simulation == false) {
-			ret = this.inventory.Get(itemDef, numPick);
-			this.numStockEMA.Add(timeNow, this.inventory.GetNumStock(itemDef));
+			numStock -= numPick;
+			this.numStockEMA.Add(timeNow, numStock);
 			this.outputStockEMA.Add(timeNow, numPick);
 		} else {
-			ret = this.inventory.Peek(itemDef, numPick);
 		}
+		Item ret = new Item(itemDef, numPick);
 		return ret;
 	}
 
-	public void Put(long timeNow, Item item, boolean simulation) throws Exception {
-		if (item.GetItemDef() != this.itemDef) throw new Exception("fatal error");
+	public void Put(long timeNow, double numPut, boolean simulation) throws Exception {
 		if (simulation == false) {
-			this.inventory.Put(item);
-			this.numStockEMA.Add(timeNow, this.inventory.GetNumStock(itemDef));
-			this.inputStockEMA.Add(timeNow, item.GetQuantity());
+			numStock += numPut;
+			this.numStockEMA.Add(timeNow, numStock);
+			this.inputStockEMA.Add(timeNow, numPut);
 		} else {
-			this.inventory.PutTest(item);
 		}
-	}
-
-	public double GetCurrentMaxLot() {
-		double space = this.inventory.FindSpace(itemDef);
-		double lot;
-		if (space < this.stockManagerInfo.lotmax) {
-			lot = space;
-		} else {
-			lot = this.stockManagerInfo.lotmax;
-		}
-		return lot;
 	}
 
 	// ////////////////////////////////////////////////////////

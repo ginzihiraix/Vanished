@@ -64,6 +64,7 @@ factory.capacityMaker = 100000
 ###################################
 room.…‹‚‚İê = 1
 
+nobuild = true
 size = (1,1)
 open = N,W,S,E
 

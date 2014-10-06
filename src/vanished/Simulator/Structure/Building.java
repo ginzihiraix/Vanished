@@ -33,7 +33,13 @@ public class Building {
 	public Building(long timeNow, BuildingDef buildingDef, Location location, int direction, boolean realFlag) throws Exception {
 		this.buildingDef = buildingDef;
 
-		buildRoom = new FactoryRoom(this, buildingDef.buildRoomDef, true);
+		if (buildingDef.nobuildFlag == false) {
+			buildCompletedFlag = false;
+			buildRoom = new FactoryRoom(this, buildingDef.buildRoomDef, true);
+		} else {
+			buildCompletedFlag = true;
+			buildRoom = null;
+		}
 
 		for (RoomDef roomDef : buildingDef.roomdefList) {
 			Room room;
@@ -95,7 +101,10 @@ public class Building {
 
 	public boolean IsInitialCostRecovered(long timeNow) {
 		if (timeNow < timeStart + OtherUtility.durationRecoverInitialCost) return true;
-		double total = buildRoom.GetMoney();
+		double total = 0;
+		if (buildRoom != null) {
+			total += buildRoom.GetMoney();
+		}
 		for (Room room : roomList) {
 			total += room.GetMoney();
 		}
@@ -114,14 +123,18 @@ public class Building {
 	}
 
 	public void WriteLog(long timeNow) throws Exception {
-		this.buildRoom.WriteLog(timeNow);
+		if (this.buildRoom != null) {
+			this.buildRoom.WriteLog(timeNow);
+		}
 		for (Room room : roomList) {
 			room.WriteLog(timeNow);
 		}
 	}
 
 	public void DiscardOldLog(long timeNow) throws Exception {
-		this.buildRoom.DiscardOldLog(timeNow);
+		if (this.buildRoom != null) {
+			this.buildRoom.DiscardOldLog(timeNow);
+		}
 		for (Room room : roomList) {
 			room.DiscardOldLog(timeNow);
 		}
