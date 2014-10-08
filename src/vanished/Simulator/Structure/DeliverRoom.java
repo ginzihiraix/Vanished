@@ -84,8 +84,9 @@ public class DeliverRoom extends Room {
 			if (numPickForMoney < minNumPick) minNumPick = numPickForMoney;
 		}
 
-		// w“üŽžŠÔ‚ðŒvŽZ‚·‚éBŒÂ”‚É”ä—á‚·‚éB
-		long durationToSell = (long) (deliverRoomDef.durationForDeliver * minNumPick) + 1L;
+		// TODO:w“üŽžŠÔ‚ðŒvŽZ‚·‚éBŒÂ”‚É”ä—á‚·‚éB
+		// long durationToSell = (long) (deliverRoomDef.durationForDeliver * minNumPick) + 1L;
+		long durationToSell = deliverRoomDef.durationForDeliver;
 
 		CallForItem callForItem = new CallForItem(itemDef, price, minNumPick, durationToSell);
 		return callForItem;
@@ -95,7 +96,7 @@ public class DeliverRoom extends Room {
 		StockManager sm = deliverStockManager.get(itemDef);
 		if (sm == null) return null;
 		// ‰¿Ši‚ðŒˆ’è‚·‚éB
-		double price = sm.price * Math.pow(1.02, OtherUtility.rand.nextInt(11) - 11 / 2);
+		double price = sm.price * Math.pow(1.005, OtherUtility.rand.nextInt(81) - 81 / 2);
 		return this.GetDesiredItem(itemDef, maxMoney, maxNumPick, price);
 	}
 

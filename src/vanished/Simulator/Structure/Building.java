@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import vanished.Simulator.Location;
 import vanished.Simulator.OtherUtility;
 import vanished.Simulator.Rect;
+import vanished.Simulator.Item.ItemDef;
 
 public class Building {
 	BuildingDef buildingDef;
@@ -92,6 +93,13 @@ public class Building {
 	public void ChangeBuildingStatus() {
 		if (buildCompletedFlag == false) {
 			if (buildRoom.shopStockManager.GetNumStock() >= 1) {
+				for (ItemDef itemDef : buildRoom.deliverStockManager.keySet()) {
+					boolean flag = true;
+					if (buildRoom.deliverStockManager.get(itemDef).GetNumStock() < 0) {
+						flag = false;
+					}
+					if (flag == false) return;
+				}
 				System.out.println("祝、建設完成！！！！！！！！！");
 				buildRoom.DumpStatus(0);
 				this.buildCompletedFlag = true;

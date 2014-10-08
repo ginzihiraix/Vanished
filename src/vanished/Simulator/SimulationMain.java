@@ -19,11 +19,11 @@ public class SimulationMain extends Thread {
 			// mapManager.CreateBuilding(new Building(0, GlobalParameter.dm.GetBuilding("伐採場"), new Location(1, 1), 0, true));
 			// mapManager.CreateBuilding(new Building(0, GlobalParameter.dm.GetBuilding("採石場"), new Location(2, 2), 0, true));
 			// mapManager.CreateBuilding(new Building(0, GlobalParameter.dm.GetBuilding("採石場"), new Location(3, 3), 0, true));
-			// mapManager.CreateBuilding(new Building(0, GlobalParameter.dm.GetBuilding("水汲み場"), new Location(4, 4), 0, false));
+			mapManager.CreateBuilding(new Building(0, GlobalParameter.dm.GetBuilding("水汲み場"), new Location(4, 4), 0, true));
 			mapManager.CreateBuilding(new Building(0, GlobalParameter.dm.GetBuilding("水汲み場"), new Location(5, 5), 0, true));
 			mapManager.CreateBuilding(new Building(0, GlobalParameter.dm.GetBuilding("釣り場"), new Location(6, 6), 0, true));
-			// mapManager.CreateBuilding(new Building(0, GlobalParameter.dm.GetBuilding("釣り場"), new Location(7, 7), 0, true));
-			// mapManager.CreateBuilding(new Building(0, GlobalParameter.dm.GetBuilding("ソーセージ工場"), new Location(8, 8), 0, true));
+			mapManager.CreateBuilding(new Building(0, GlobalParameter.dm.GetBuilding("釣り場"), new Location(7, 7), 0, true));
+			mapManager.CreateBuilding(new Building(0, GlobalParameter.dm.GetBuilding("ソーセージ工場"), new Location(8, 8), 0, true));
 		}
 
 		humanManager = new HumanManager(mapManager);
@@ -45,18 +45,18 @@ public class SimulationMain extends Thread {
 				UtilityManager um = new UtilityManager();
 				System.out.println(um.ComputeUtility(0));
 				ItemDef fish = GlobalParameter.dm.GetItemDef("fish");
-				um.AddUtility(fish.GetUtilities(), 100);
+				um.AddUtility(fish.GetUtilities(), 1, 100);
 				System.out.println(um.ComputeUtility(100));
 				ItemDef water = GlobalParameter.dm.GetItemDef("water");
-				um.AddUtility(water.GetUtilities(), 100);
+				um.AddUtility(water.GetUtilities(), 1, 100);
 				System.out.println(um.ComputeUtility(100));
-				um.AddUtility(fish.GetUtilities(), 100);
+				um.AddUtility(fish.GetUtilities(), 1, 100);
 				System.out.println(um.ComputeUtility(100));
-				um.AddUtility(fish.GetUtilities(), 100);
+				um.AddUtility(fish.GetUtilities(), 1, 100);
 				System.out.println(um.ComputeUtility(100));
-				um.AddUtility(fish.GetUtilities(), 100);
+				um.AddUtility(fish.GetUtilities(), 1, 100);
 				System.out.println(um.ComputeUtility(100));
-				um.AddUtility(fish.GetUtilities(), 100);
+				um.AddUtility(fish.GetUtilities(), 1, 100);
 				System.out.println(um.ComputeUtility(100));
 			}
 
@@ -86,7 +86,7 @@ public class SimulationMain extends Thread {
 					}
 				}
 
-				if (timeNow - timeLast7day >= 60 * 24 * 30) {
+				if (timeNow - timeLast7day >= 60 * 24 * 3) {
 					timeLast7day = timeNow;
 
 					// 建設完了している建物は、建築完了フラグを立てる。
@@ -98,16 +98,35 @@ public class SimulationMain extends Thread {
 
 					// 価格を調整する。
 					{
-						for (Building building : mapManager.buildingList) {
-							for (Room room : building.GetRoomList()) {
-								if (room instanceof FactoryRoom) {
-									FactoryRoom factoryRoom = (FactoryRoom) room;
-									factoryRoom.DumpStatus(timeNow);
-									factoryRoom.ManagePriceSet(mapManager, humanManager, timeNow);
+						if (false) {
+							ArrayList<FactoryRoom> list = new ArrayList<FactoryRoom>();
+							for (Building building : mapManager.buildingList) {
+								for (Room room : building.GetRoomList()) {
+									if (room instanceof FactoryRoom) {
+										FactoryRoom factoryRoom = (FactoryRoom) room;
+										list.add(factoryRoom);
+									}
 								}
 							}
+							int index = OtherUtility.rand.nextInt(list.size());
+							FactoryRoom factoryRoom = list.get(index);
+							factoryRoom.DumpStatus(timeNow);
+							factoryRoom.ManagePriceSet(mapManager, humanManager, timeNow);
+							System.out.println("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%");
 						}
-						System.out.println("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%");
+
+						if (true) {
+							for (Building building : mapManager.buildingList) {
+								for (Room room : building.GetRoomList()) {
+									if (room instanceof FactoryRoom) {
+										FactoryRoom factoryRoom = (FactoryRoom) room;
+										factoryRoom.DumpStatus(timeNow);
+										factoryRoom.ManagePriceSet(mapManager, humanManager, timeNow);
+									}
+								}
+							}
+							System.out.println("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%");
+						}
 					}
 				}
 				if (timeNow - timeLast100day > 60 * 24 * 100) {

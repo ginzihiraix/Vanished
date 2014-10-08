@@ -6,4 +6,4 @@ weight = 0.1
 
 
 utility.duration = 1day
-utility.power.eat.food_meat.half = 0.2
+utility.power.eat.food_meat.quarter = 0.2

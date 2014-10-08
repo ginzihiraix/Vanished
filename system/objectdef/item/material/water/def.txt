@@ -7,5 +7,5 @@ weight = 1
 
 
 utility.duration = 1day
-utility.power.eat.food_water.half = 0.3
+utility.power.eat.food_water.quarter = 0.2
 

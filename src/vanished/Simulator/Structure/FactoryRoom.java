@@ -146,7 +146,7 @@ public class FactoryRoom extends ShopRoom {
 			if (numMakableMin == 0) return null;
 		}
 
-		double wageForFullWork = this.factoryProductManager.factoryMakerManager.wage * Math.pow(1.02, OtherUtility.rand.nextInt(11) - 11 / 2);
+		double wageForFullWork = this.factoryProductManager.factoryMakerManager.wage * Math.pow(1.005, OtherUtility.rand.nextInt(41) - 41 / 2);
 
 		long duration = (long) (numMakableMin / this.factoryProductManager.factoryMakerManager.factoryMakerInfo.numProductPerMake * this.factoryProductManager.factoryMakerManager.factoryMakerInfo.durationForMake);
 		if (duration == 0) duration = 1L;
@@ -275,12 +275,95 @@ public class FactoryRoom extends ShopRoom {
 
 	public void ManagePriceSet(MapManager mm, HumanManager hm, long timeNow) throws Exception {
 		if (timeNow - this.timeLastManagePrice < 60 * 24) return;
+
+		// ˜Io‚ª­‚È‚¢‚à‚Ì‚ª‚ ‚éê‡‚ÍA‰¿ŠiÝ’è‚Í‚â‚ß‚éB
+		int minImpression = 10;
+		{
+			boolean skipFlag = false;
+			FeedbackLog[] feedbackProductList = this.shopStockManager.feedbackManager.CollectResultWithEqualImpressionAdjust();
+			if (feedbackProductList.length < 5 || feedbackProductList[0].impressionTotal < minImpression) {
+				skipFlag = true;
+				this.shopStockManager.price /= 1.05;
+			}
+
+			for (Entry<ItemDef, FactoryMaterialManager> e2 : this.factoryProductManager.factoryMaterialManager.entrySet()) {
+				ItemDef materialItemDef = e2.getKey();
+				StockManager msm = this.deliverStockManager.get(materialItemDef);
+
+				FeedbackLog[] materialFeedbackList = msm.feedbackManager.CollectResultWithEqualImpressionAdjust();
+				if (materialFeedbackList.length < 5 || materialFeedbackList[0].impressionTotal < minImpression) {
+					skipFlag = true;
+					msm.price *= 1.05;
+				}
+			}
+
+			FeedbackLog[] makerFeedbackList = this.factoryProductManager.factoryMakerManager.feedbackManager.CollectResultWithEqualImpressionAdjust();
+			if (makerFeedbackList.length < 5 || makerFeedbackList[0].impressionTotal < minImpression) {
+				skipFlag = true;
+				this.factoryProductManager.factoryMakerManager.wage *= 1.05;
+			}
+
+			if (skipFlag == true) {
+				if (true) {
+					System.out.println("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$");
+					System.out.println("$                     ManageProductPricie                     $");
+					System.out.println("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$");
+					{
+						FeedbackLog[] feedbackList = shopStockManager.feedbackManager.CollectResultWithEqualImpressionAdjust();
+						// TODO
+						for (FeedbackLog feedback : feedbackList) {
+							String flag = "";
+							if (feedback.price == this.shopStockManager.price) {
+								flag = " <-BEST";
+							}
+							System.out.println(feedback.price + "‰~, " + feedback.impressionTotal + "‰ñ, " + feedback.quantityTotal + "ŒÂ" + flag);
+						}
+						shopStockManager.ResetStatisticalParameters();
+					}
+
+					System.out.println("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$");
+					System.out.println("$                    ManageMaterialPricie                     $");
+					System.out.println("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$");
+					for (Entry<ItemDef, StockManager> e : deliverStockManager.entrySet()) {
+						StockManager msm = e.getValue();
+						System.out.println(msm.stockManagerInfo.itemDef.GetName());
+						FeedbackLog[] feedbackList = msm.feedbackManager.CollectResultWithEqualImpressionAdjust();
+						// TODO
+						for (FeedbackLog feedback : feedbackList) {
+							String flag = "";
+							if (feedback.price == msm.price) {
+								flag = " <-BEST";
+							}
+							System.out.println(feedback.price + "‰~, " + feedback.impressionTotal + "‰ñ, " + feedback.quantityTotal + "ŒÂ" + flag);
+						}
+						msm.ResetStatisticalParameters();
+					}
+
+					System.out.println("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$");
+					System.out.println("$                      ManageMakerWage                        $");
+					System.out.println("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$");
+					{
+						FeedbackLog[] feedbackList = this.factoryProductManager.factoryMakerManager.feedbackManager
+								.CollectResultWithEqualImpressionAdjust();
+						// TODO
+						for (FeedbackLog feedback : feedbackList) {
+							String flag = "";
+							if (feedback.price == this.factoryProductManager.factoryMakerManager.wage) {
+								flag = " <-BEST";
+							}
+							System.out.println(feedback.price + "‰~, " + feedback.impressionTotal + "‰ñ, " + feedback.quantityTotal + "ŒÂ" + flag);
+						}
+						this.factoryProductManager.factoryMakerManager.ResetStatisticalParameters();
+					}
+				}
+				return;
+			}
+		}
+
 		long duration = timeNow - this.timeLastManagePrice;
 		this.timeLastManagePrice = timeNow;
 
-		int minImpression = 10;
-
-		// ‰½“úŒã‚ÉŠ®¬‚ð–ÚŽw‚·‚©‚ÍA‚Ç‚±‚©‚ÅÝ’è‚Å‚«‚é‚æ‚¤‚É‚·‚×‚«B
+		// TODO:‰½“úŒã‚ÉŠ®¬‚ð–ÚŽw‚·‚©‚ÍA‚Ç‚±‚©‚ÅÝ’è‚Å‚«‚é‚æ‚¤‚É‚·‚×‚«B
 		long durationFutureTarget;
 		if (this.forBuilding == true) {
 			durationFutureTarget = 60L * 24L * 30L;
@@ -289,7 +372,6 @@ public class FactoryRoom extends ShopRoom {
 		}
 
 		double productStock = this.shopStockManager.GetNumStock();
-
 		{
 			double gainGlobal = -Double.MAX_VALUE;
 			FeedbackLog feedbackProductGlobal = null;
@@ -298,53 +380,38 @@ public class FactoryRoom extends ShopRoom {
 
 			FeedbackLog[] feedbackProductList = this.shopStockManager.feedbackManager.CollectResultWithEqualImpressionAdjust();
 
-			// »•i‚Ì˜Io‚ªˆê‰ñ‚à–³‚¢‚Æ‚«‚ÍAuŒ»Ý‚Ì»•i‰¿Ši‚Å”Ì”„—Ê0v‚ðÝ’è‚µ‚Ä‚¨‚­B
-			{
-				if (feedbackProductList.length == 0 || feedbackProductList[0].impressionTotal < minImpression) {
-					feedbackProductList = new FeedbackLog[1];
-					feedbackProductList[0] = new FeedbackLog(this.shopStockManager.price);
-				}
-			}
-
 			// —˜‰v‚ªÅ‚à‘å‚«‚­‚È‚éÝ’è‚ð’T‚·B
 			// »•i‰¿Ši‚É‰ž‚¶‚ÄA”„‚ê‚é‘¬“x‚ªˆá‚¤B
 			// ”„‚ê‚é‘¬“x‚É‘Î‚µ‚ÄA“KØ‚ÈÞ—¿‰¿Ši‚Æ˜J“­ŽÒ’À‹à‚ðÝ’è‚µ‚½‚Æ‚«‚ÌA—˜‰v‚ðŒvŽZ‚·‚éB
-			for (FeedbackLog procutFeedback : feedbackProductList) {
+			for (FeedbackLog productFeedback : feedbackProductList) {
 
 				// ”Ì”„—Ê‚ÉŒ©‡‚¤‚¾‚¯‚ÌÞ—¿‚ðŽd“ü‚ê‚é‚½‚ß‚Ì‰¿ŠiÝ’è‚ð’T‚·B
 				TreeMap<ItemDef, FeedbackLog> materialFeedbackBest = new TreeMap<ItemDef, FeedbackLog>(new ItemDefComparator());
 				for (Entry<ItemDef, FactoryMaterialManager> e2 : this.factoryProductManager.factoryMaterialManager.entrySet()) {
 					ItemDef materialItemDef = e2.getKey();
+					FactoryMaterialManager fmm = e2.getValue();
+					StockManager msm = this.deliverStockManager.get(materialItemDef);
 
 					// ”Ì”„‘¬“xnumSell‚ÆÅ‚à‹ß‚¢‘¬“x‚ÅŽd“ü‚ê‚Å‚«‚éAÅ“KŽd“ü‚ê‰¿Ši‚ðŒ©‚Â‚¯‚éB
 					FeedbackLog materialFeedbakLocalBest = null;
 					{
-						FactoryMaterialManager fmm = e2.getValue();
-
-						StockManager msm = this.deliverStockManager.get(materialItemDef);
 						double materialStock = msm.GetNumStock();
-						double numMaterialTarget;
+						double targetSpeedMaterial;
 						if (this.forBuilding == false) {
-							numMaterialTarget = procutFeedback.quantityTotal * fmm.factoryMaterialInfo.amount - materialStock / durationFutureTarget
-									* duration;
+							targetSpeedMaterial = (productFeedback.quantityTotal / duration - productStock / durationFutureTarget)
+									* fmm.factoryMaterialInfo.amount - materialStock / durationFutureTarget;
 						} else {
-							numMaterialTarget = 1.0 * fmm.factoryMaterialInfo.amount / durationFutureTarget * duration;
+							targetSpeedMaterial = 1.0 * fmm.factoryMaterialInfo.amount / durationFutureTarget;
 						}
 
 						FeedbackLog[] materialFeedbackList = msm.feedbackManager.CollectResultWithEqualImpressionAdjust();
-						if (materialFeedbackList.length > 0 && materialFeedbackList[0].impressionTotal > minImpression) {
-							double scoreBest = Double.MAX_VALUE;
-							for (FeedbackLog materialFeedback : materialFeedbackList) {
-								double score = Math.abs(numMaterialTarget - materialFeedback.quantityTotal);
-								if (score <= scoreBest) {
-									scoreBest = score;
-									materialFeedbakLocalBest = materialFeedback;
-								}
+						double scoreBest = Double.MAX_VALUE;
+						for (FeedbackLog materialFeedback : materialFeedbackList) {
+							double score = Math.abs(targetSpeedMaterial - materialFeedback.quantityTotal / duration);
+							if (score <= scoreBest) {
+								scoreBest = score;
+								materialFeedbakLocalBest = materialFeedback;
 							}
-						}
-						if (materialFeedbakLocalBest == null) {
-							materialFeedbakLocalBest = new FeedbackLog(msm.price);
-							materialFeedbakLocalBest.quantityTotal = numMaterialTarget;
 						}
 					}
 					materialFeedbackBest.put(materialItemDef, materialFeedbakLocalBest);
@@ -353,35 +420,27 @@ public class FactoryRoom extends ShopRoom {
 				// ”Ì”„—Ê‚ÉŒ©‡‚¤‚¾‚¯‚Ì˜J“­ŽÒ‚ðŠm•Û‚·‚é‚½‚ß‚Ì‰¿ŠiÝ’è‚ð’T‚·B
 				FeedbackLog makerFeedbackBest = null;
 				{
-					double numMakerTarget;
+					double targetSpeedMake;
 					if (this.forBuilding == false) {
-						numMakerTarget = (procutFeedback.quantityTotal - productStock / durationFutureTarget * duration)
-								/ this.factoryProductManager.factoryMakerManager.factoryMakerInfo.numProductPerMake;
+						targetSpeedMake = productFeedback.quantityTotal / duration - productStock / durationFutureTarget;
 					} else {
-						numMakerTarget = (1.0 / durationFutureTarget * duration)
-								/ this.factoryProductManager.factoryMakerManager.factoryMakerInfo.numProductPerMake;
+						targetSpeedMake = 1.0 / durationFutureTarget;
 					}
 
 					FeedbackLog[] makerFeedbackList = this.factoryProductManager.factoryMakerManager.feedbackManager
 							.CollectResultWithEqualImpressionAdjust();
-					if (makerFeedbackList.length > 0 && makerFeedbackList[0].impressionTotal > minImpression) {
-						double scoreBest = Double.MAX_VALUE;
-						for (FeedbackLog makerFeedback : makerFeedbackList) {
-							double score = Math.abs(numMakerTarget - makerFeedback.quantityTotal);
-							if (score < scoreBest) {
-								scoreBest = score;
-								makerFeedbackBest = makerFeedback;
-							}
+					double scoreBest = Double.MAX_VALUE;
+					for (FeedbackLog makerFeedback : makerFeedbackList) {
+						double score = Math.abs(targetSpeedMake - makerFeedback.quantityTotal / duration);
+						if (score < scoreBest) {
+							scoreBest = score;
+							makerFeedbackBest = makerFeedback;
 						}
-					}
-					if (makerFeedbackBest == null) {
-						makerFeedbackBest = new FeedbackLog(this.factoryProductManager.factoryMakerManager.wage);
-						makerFeedbackBest.quantityTotal = numMakerTarget;
 					}
 				}
 
 				// ¶ŽY‘¬“x‚ð‹‚ß‚éB
-				double numProducableMin = procutFeedback.quantityTotal;
+				double numProducableMin = productFeedback.quantityTotal;
 				{
 					for (Entry<ItemDef, FactoryMaterialManager> e2 : this.factoryProductManager.factoryMaterialManager.entrySet()) {
 						ItemDef materialItemDef = e2.getKey();
@@ -394,8 +453,7 @@ public class FactoryRoom extends ShopRoom {
 					}
 
 					{
-						double numProducable = makerFeedbackBest.quantityTotal
-								* this.factoryProductManager.factoryMakerManager.factoryMakerInfo.numProductPerMake;
+						double numProducable = makerFeedbackBest.quantityTotal;
 						if (numProducable < numProducableMin) {
 							numProducableMin = numProducable;
 						}
@@ -406,7 +464,7 @@ public class FactoryRoom extends ShopRoom {
 				double gain;
 				{
 					{
-						gain = numProducableMin * procutFeedback.price;
+						gain = numProducableMin * productFeedback.price;
 					}
 
 					for (Entry<ItemDef, FactoryMaterialManager> e2 : this.factoryProductManager.factoryMaterialManager.entrySet()) {
@@ -426,7 +484,7 @@ public class FactoryRoom extends ShopRoom {
 
 				if (gain > gainGlobal) {
 					gainGlobal = gain;
-					feedbackProductGlobal = procutFeedback;
+					feedbackProductGlobal = productFeedback;
 					feedbackMaterialGlobal = materialFeedbackBest;
 					feedbackMakerGlobal = makerFeedbackBest;
 				}
@@ -503,7 +561,6 @@ public class FactoryRoom extends ShopRoom {
 			}
 		}
 	}
-
 	// /////////////////////////////////////////////////////////////////////
 	// /////////////////////////////////////////////////////////////////////
 	// Obsolete

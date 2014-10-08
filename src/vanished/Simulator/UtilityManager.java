@@ -18,22 +18,23 @@ public class UtilityManager {
 	}
 
 	TreeMap<String, CategoryUtility> categoryUtility = new TreeMap<String, CategoryUtility>();
-	TreeMap<UtilityDuration, UtilityLog> exponentialMovingAverageLog = new TreeMap<UtilityDuration, UtilityLog>();
 
-	public class UtilityLog {
-		ExponentialMovingAverage utilityAverage = new ExponentialMovingAverage(60 * 24 * 365, false);
+	// TreeMap<UtilityDuration, UtilityLog> exponentialMovingAverageLog = new TreeMap<UtilityDuration, UtilityLog>();
 
-		public UtilityLog() {
-		}
-
-		public UtilityLog(UtilityLog ul) {
-			this.utilityAverage = new ExponentialMovingAverage(ul.utilityAverage);
-		}
-
-		public void Put(long timeNow, double utility) {
-			utilityAverage.Add(timeNow, utility);
-		}
-	}
+	// public class UtilityLog {
+	// ExponentialMovingAverage utilityAverage = new ExponentialMovingAverage(60 * 24 * 365, false);
+	//
+	// public UtilityLog() {
+	// }
+	//
+	// public UtilityLog(UtilityLog ul) {
+	// this.utilityAverage = new ExponentialMovingAverage(ul.utilityAverage);
+	// }
+	//
+	// public void Put(long timeNow, double utility) {
+	// utilityAverage.Add(timeNow, utility);
+	// }
+	// }
 
 	public class EachConfigUtility {
 		Utility utility;
@@ -93,18 +94,30 @@ public class UtilityManager {
 			}
 		}
 
-		public void AddUtility(ArrayList<Utility> utilities, long timeNow) throws Exception {
+		public void AddUtility(ArrayList<Utility> utilities, double numConsume, long timeNow) throws Exception {
 			for (Utility utility : utilities) {
 				EachConfigUtility uec = umap.get(utility);
 				if (uec == null) {
 					uec = new EachConfigUtility(timeNow, utility);
 					umap.put(utility, uec);
 				}
-				uec.AddUtility(timeNow, utility.power);
+				uec.AddUtility(timeNow, utility.power * numConsume);
 			}
 		}
 
 		public double ComputeUtility(long timeNow) throws Exception {
+
+			// TODO
+			// if (umap.size() > 1) {
+			// System.out.println("2");
+			// for (Entry<Utility, EachConfigUtility> e : umap.entrySet()) {
+			// Utility utility = e.getKey();
+			// EachConfigUtility uec = e.getValue();
+			// double u = uec.ComputeUtility(timeNow);
+			// System.out.println(utility.category + ", " + utility.subcategory + ", " + u);
+			// }
+			// }
+
 			double uTotal = 0;
 			for (Entry<Utility, EachConfigUtility> e : umap.entrySet()) {
 				EachConfigUtility uec = e.getValue();
@@ -125,18 +138,18 @@ public class UtilityManager {
 			this.categoryUtility.put(category, new CategoryUtility(cu));
 		}
 
-		for (Entry<UtilityDuration, UtilityLog> e : um.exponentialMovingAverageLog.entrySet()) {
-			UtilityDuration ud = e.getKey();
-			UtilityLog ul = e.getValue();
-			this.exponentialMovingAverageLog.put(ud, new UtilityLog(ul));
-		}
+		// for (Entry<UtilityDuration, UtilityLog> e : um.exponentialMovingAverageLog.entrySet()) {
+		// UtilityDuration ud = e.getKey();
+		// UtilityLog ul = e.getValue();
+		// this.exponentialMovingAverageLog.put(ud, new UtilityLog(ul));
+		// }
 	}
 
 	public double ComputeUtility(long timeNow) throws Exception {
 		if (categoryUtility.size() == 0) return 0;
 
 		// TODO
-		double p = 0.2;
+		double p = 1;
 		double total = 0;
 		for (Entry<String, CategoryUtility> e : this.categoryUtility.entrySet()) {
 			CategoryUtility cu = e.getValue();
@@ -147,7 +160,7 @@ public class UtilityManager {
 		return total;
 	}
 
-	public void AddUtility(ArrayList<Utility> utilities, long timeNow) throws Exception {
+	public void AddUtility(ArrayList<Utility> utilities, double numConsume, long timeNow) throws Exception {
 
 		if (utilities.size() == 0) return;
 
@@ -158,18 +171,18 @@ public class UtilityManager {
 				cu = new CategoryUtility();
 				this.categoryUtility.put(utility.category, cu);
 			}
-			cu.AddUtility(utilities, timeNow);
+			cu.AddUtility(utilities, numConsume, timeNow);
 		}
 
-		{
-			Utility utility = utilities.get(0);
-			UtilityLog ul = this.exponentialMovingAverageLog.get(utility.duration);
-			if (ul == null) {
-				ul = new UtilityLog();
-				this.exponentialMovingAverageLog.put(utility.duration, ul);
-			}
-			double u = this.ComputeUtility(timeNow);
-			ul.Put(timeNow, u);
-		}
+		// {
+		// Utility utility = utilities.get(0);
+		// UtilityLog ul = this.exponentialMovingAverageLog.get(utility.duration);
+		// if (ul == null) {
+		// ul = new UtilityLog();
+		// this.exponentialMovingAverageLog.put(utility.duration, ul);
+		// }
+		// double u = this.ComputeUtility(timeNow);
+		// ul.Put(timeNow, u);
+		// }
 	}
 }

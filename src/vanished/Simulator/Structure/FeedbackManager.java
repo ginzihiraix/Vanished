@@ -50,6 +50,36 @@ public class FeedbackManager {
 			log.quantityTotal = log.quantityTotal / log.impressionTotal * totalImp / ret.length;
 			log.impressionTotal = totalImp / ret.length;
 		}
+
+		// TODO:スムージングする。
+		{
+			int num = ret.length;
+			if (num >= 3) {
+				double[] value = new double[num];
+				for (int i = 0; i < num; i++) {
+					value[i] = ret[i].quantityTotal;
+				}
+
+				for (int frame = 0; frame < 10; frame++) {
+					double[] value2 = new double[num];
+					for (int i = 0; i < num; i++) {
+						if (i == 0) {
+							value2[i] = (value[i] + value[i + 1]) / 2;
+						} else if (i == num - 1) {
+							value2[i] = (value[i - 1] + value[i]) / 2;
+						} else {
+							value2[i] = (value[i - 1] + value[i] + value[i + 1]) / 3;
+						}
+					}
+					value = value2;
+				}
+
+				for (int i = 0; i < num; i++) {
+					ret[i].quantityTotal = value[i];
+				}
+			}
+		}
+
 		return ret;
 	}
 }

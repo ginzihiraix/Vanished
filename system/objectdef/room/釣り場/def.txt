@@ -36,13 +36,12 @@ shop.lotmax = 100
 
 
 
-
 ###################################
 # FactoryRoom
 # for factory
 ###################################
 factory.skill = noskill
-factory.durationForMake = 480
-factory.numProductPerMake = 5
+factory.durationForMake = 240
+factory.numProductPerMake = 1
 factory.capacityMaker = 10000
 

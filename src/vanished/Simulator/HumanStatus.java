@@ -41,6 +41,9 @@ public class HumanStatus {
 	long timeBecomeAdult = 0;
 	long totalTimeWork = 0;
 
+	// temp
+	int tempFlag = 0;
+
 	// 統計情報
 	ExponentialMovingAverage wageMovingAverage = new ExponentialMovingAverage(60 * 24 * 90, true);
 	ExponentialMovingAverage utilityMovingAverage = new ExponentialMovingAverage(60 * 24 * 90, false);
@@ -62,14 +65,16 @@ public class HumanStatus {
 		timeBecomeAdult = timeNow;
 		totalTimeWork = 0;
 
+		tempFlag = OtherUtility.rand.nextInt(2);
+
 		// TODO:とりあえずご飯を食う。
 		if (false) {
 			for (int i = 0; i < 10; i++) {
 				ItemDef fish = GlobalParameter.dm.GetItemDef("fish");
-				this.utilityManager.AddUtility(fish.GetUtilities(), this.timeSimulationComplete);
+				this.utilityManager.AddUtility(fish.GetUtilities(), 1, this.timeSimulationComplete);
 
 				ItemDef water = GlobalParameter.dm.GetItemDef("water");
-				this.utilityManager.AddUtility(water.GetUtilities(), this.timeSimulationComplete);
+				this.utilityManager.AddUtility(water.GetUtilities(), 1, this.timeSimulationComplete);
 			}
 		}
 	}
@@ -93,6 +98,8 @@ public class HumanStatus {
 		this.timeBorn = hs.timeBorn;
 		this.timeBecomeAdult = hs.timeBecomeAdult;
 		this.totalTimeWork = hs.totalTimeWork;
+
+		this.tempFlag = hs.tempFlag;
 
 		this.wageMovingAverage = new ExponentialMovingAverage(hs.wageMovingAverage);
 		this.utilityMovingAverage = new ExponentialMovingAverage(hs.utilityMovingAverage);
@@ -142,6 +149,13 @@ public class HumanStatus {
 			this.utilStart = utilStart;
 			this.utilEnd = utilEnd;
 		}
+
+		public void Dump() {
+			System.out.println("--------------");
+			System.out.println("金　：" + moneyStart + "→" + moneyEnd);
+			System.out.println("時刻：" + timeStart + "→" + timeEnd);
+			System.out.println("効用：" + utilStart + "→" + utilEnd);
+		}
 	}
 
 	// //////////////////////////////////////////////////////////
@@ -161,6 +175,12 @@ public class HumanStatus {
 			this.shopRoom = shopRoom;
 			this.itemCatalog = itemCatalog;
 		}
+
+		public void Dump() {
+			super.Dump();
+			System.out.println(String.format("買う：%sで%f円の%sを%f個買う。計%f円使った。%d分かかった。", shopRoom.GetName(), itemCatalog.price,
+					itemCatalog.itemDef.GetName(), itemCatalog.numPick, itemCatalog.price * itemCatalog.numPick, itemCatalog.durationToBuy));
+		}
 	}
 
 	public class TrySellResult extends TryResult {
@@ -174,6 +194,14 @@ public class HumanStatus {
 			this.deliverRoom = deliverRoom;
 			this.callForItem = callForItem;
 		}
+
+		public void Dump() {
+			super.Dump();
+			System.out.println(String.format("売る：%sで%f円の%sを%f個買う。計%f円使った。%d分かかった。", this.deliverRoom.GetName(), this.callForItem.price,
+					this.callForItem.itemDef.GetName(), this.callForItem.numPick, this.callForItem.price * this.callForItem.numPick,
+					this.callForItem.durationToSell));
+		}
+
 	}
 
 	public boolean TryTraderAndConsume(boolean realFlag, ArrayList<TryResult> ret) throws Exception {
@@ -229,7 +257,16 @@ public class HumanStatus {
 		}
 
 		// 商品情報を取得する。
-		ItemCatalog itemCatalog = shopRoom.GetProductItemForConsumeWithNewPrice(this.money, Double.MAX_VALUE);
+		ItemCatalog itemCatalog = shopRoom.GetProductItemForConsumeWithNewPrice(Double.MAX_VALUE, Double.MAX_VALUE);
+
+		// 個数を調整する。
+		{
+			double numPick = Double.MAX_VALUE;
+			if (itemCatalog.numPick < numPick) numPick = itemCatalog.numPick;
+			if (callForItem.numPick < numPick) numPick = callForItem.numPick;
+			itemCatalog = shopRoom.GetProductItemWithFixedPrice(Double.MAX_VALUE, numPick, itemCatalog.price);
+			callForItem = deliverRoom.GetDesiredItemWithFixedPrice(callForItem.itemDef, Double.MAX_VALUE, numPick, callForItem.price);
+		}
 
 		// 買う
 		{
@@ -255,6 +292,7 @@ public class HumanStatus {
 
 			this.Move(deliverRoom);
 			this.Sell(callForItem, true);
+			if (this.money < 0) throw new HumanSimulationException("TryTrader : no money");
 
 			double moneyEnd = this.money;
 			long timeEnd = this.timeSimulationComplete;
@@ -265,31 +303,6 @@ public class HumanStatus {
 
 		return realFlag;
 	}
-
-	// public void DoTrader(TraderWorkResult res) throws Exception {
-	// System.out.println(String.format("DoTrader : Bought %f %s with $%f at %s, and sold it with $%f to %s.", res.callForItem.numPick,
-	// res.callForItem.itemDef.GetName(), res.itemCatalog.price, res.shopRoom.GetName(), res.callForItem.price, res.deliverRoom.GetName()));
-	//
-	// double moneyStart = this.money;
-	// long timeStart = this.timeSimulationComplete;
-	//
-	// this.Move(res.shopRoom);
-	//
-	// this.Buy(res.itemCatalog, false);
-	//
-	// this.Move(res.deliverRoom);
-	//
-	// this.Sell(res.callForItem, false);
-	//
-	// double moneyEnd = this.money;
-	// long timeEnd = this.timeSimulationComplete;
-	//
-	// double gain = moneyEnd - moneyStart;
-	// double duration = timeEnd - timeStart;
-	//
-	// this.wageMovingAverage.Add(this.timeSimulationComplete, gain);
-	// this.totalTimeWork += duration;
-	// }
 
 	// //////////////////////////////////////////////////////////
 	// //////////////////////////////////////////////////////////
@@ -325,6 +338,12 @@ public class HumanStatus {
 			int ret = factoryRoom.hashCode() + cfm.skill.GetName().hashCode() + cfm.itemDef.GetName().hashCode();
 			return ret;
 		}
+
+		public void Dump() {
+			super.Dump();
+			System.out.println(String.format("作る：%sで%sを%f個作る。計%f円稼いだ。%d分かかった。時給は%f円。", this.factoryRoom.GetName(), this.cfm.itemDef.GetName(),
+					this.cfm.numMake, this.cfm.gain, this.cfm.duration, this.cfm.gain / this.cfm.duration * 60));
+		}
 	}
 
 	public boolean TryMakerAndConsume(boolean realFlag, ArrayList<TryResult> ret) throws Exception {
@@ -359,6 +378,13 @@ public class HumanStatus {
 					"TryMaker : There are no skill position in the selected factory.");
 		}
 
+		// TODO
+		if (tempFlag == 0) {
+			if (cfm.itemDef.GetName().equals("water")) throw new HumanSimulationException("no ability");
+		} else if (tempFlag == 1) {
+			if (cfm.itemDef.GetName().equals("fish")) throw new HumanSimulationException("no ability");
+		}
+
 		double moneyStart = this.money;
 		long timeStart = this.timeSimulationComplete;
 		double utilStart = this.ComputeUtility();
@@ -375,27 +401,6 @@ public class HumanStatus {
 
 		return realFlag;
 	}
-
-	// public void DoMaker(TryMakerResult res) throws Exception {
-	// System.out.println(String.format("DoMaker : %sで仕事した。%sを%f個・賃金%f・時間%dで作った。", res.factoryRoom.GetName(), res.cfm.itemDef.GetName(),
-	// res.cfm.numMake, res.cfm.gain, res.cfm.duration));
-	//
-	// double moneyStart = this.money;
-	// long timeStart = this.timeSimulationComplete;
-	//
-	// this.Move(res.factoryRoom);
-	//
-	// this.Make(res.cfm, false);
-	//
-	// double moneyEnd = this.money;
-	// long timeEnd = this.timeSimulationComplete;
-	//
-	// double gain = moneyEnd - moneyStart;
-	// double duration = timeEnd - timeStart;
-	//
-	// this.wageMovingAverage.Add(this.timeSimulationComplete, gain);
-	// this.totalTimeWork += duration;
-	// }
 
 	// //////////////////////////////////////////////////////////
 	// //////////////////////////////////////////////////////////
@@ -414,13 +419,20 @@ public class HumanStatus {
 			this.shopRoom = shopRoom;
 			this.itemCatalog = itemCatalog;
 		}
+
+		public void Dump() {
+			super.Dump();
+			System.out.println(String.format("消費する：%sで%sを%f個消費した。計%f円使った。%d分かかった。", this.shopRoom.GetName(), this.itemCatalog.itemDef.GetName(),
+					this.itemCatalog.numPick, this.itemCatalog.price * this.itemCatalog.numPick, this.itemCatalog.durationToBuy));
+		}
+
 	}
 
 	private boolean TryConsumeWithAllMoney(boolean realFlag, ArrayList<TryResult> ret) throws Exception {
 		// System.out.println("TryConsumeWithAllMoney");
 
 		while (true) {
-			if (this.money == 0) break;
+			if (this.money <= 0) break;
 
 			// 消費する場所を決定する。
 			ShopRoom consumeRoom;
@@ -446,6 +458,12 @@ public class HumanStatus {
 						"TryConsume : There are no eat place to get food");
 				if (consumeItemCatalog.numPick == 0) throw new HumanSimulationException("TryConsume : There are no eat place to get food");
 			}
+
+			// TODO
+			// if (consumeItemCatalog.itemDef.GetName().equals("ソーセージ")) {
+			// int a = 0;
+			// System.out.print(a);
+			// }
 
 			double moneyStart = this.money;
 			long timeStart = this.timeSimulationComplete;
@@ -508,88 +526,6 @@ public class HumanStatus {
 
 	// //////////////////////////////////////////////////////////
 	// //////////////////////////////////////////////////////////
-	// アイテムを消費してみる。金で買う。
-	// //////////////////////////////////////////////////////////
-	// //////////////////////////////////////////////////////////
-	// public class ConsumeResult extends TryResult {
-	// ShopRoom shopRoom;
-	// ItemCatalog itemCatalog;
-	//
-	// public ConsumeResult(ShopRoom shopRoom, ItemCatalog itemCatalog, double moneyStart, double moneyEnd, long timeStart, long timeEnd,
-	// double utilStart, double utilEnd) {
-	// super(moneyStart, moneyEnd, timeStart, timeEnd, utilStart, utilEnd);
-	// this.shopRoom = shopRoom;
-	// this.itemCatalog = itemCatalog;
-	// }
-	//
-	// @Override
-	// public boolean equals(java.lang.Object obj) {
-	// if (obj instanceof ConsumeResult == false) return false;
-	// ConsumeResult res = (ConsumeResult) obj;
-	// if (this.shopRoom == res.shopRoom) {
-	// if (this.itemCatalog.itemDef.GetName().equals(res.itemCatalog.itemDef.GetName())) { return true; }
-	// }
-	// return false;
-	// }
-	//
-	// @Override
-	// public int hashCode() {
-	// int ret = this.shopRoom.hashCode() + this.itemCatalog.itemDef.GetName().hashCode();
-	// return ret;
-	// }
-	// }
-
-	// public ConsumeResult TryConsume() throws Exception {
-	// System.out.println("TryConsume");
-	//
-	// double moneyStart = this.money;
-	// long timeStart = this.timeSimulationComplete;
-	// double utilStart = this.ComputeUtility();
-	//
-	// // 消費する場所を決定する。
-	// ShopRoom consumeRoom;
-	// if (true) {
-	// ArrayList<ShopRoom> list = mm.GetConsumableRoomList(moveMethod, HumanDef.maxMoveTimeForConsume, currentRoom, Double.MAX_VALUE,
-	// Double.MAX_VALUE, false);
-	// int num = list.size();
-	// if (num == 0) throw new HumanSimulationException("TryConsume : There are no eat place to get food");
-	// int index = OtherUtility.rand.nextInt(num);
-	// consumeRoom = list.get(index);
-	// }
-	//
-	// Move(consumeRoom);
-	//
-	// // 消費するアイテムを決定する。
-	// ItemCatalog consumeItemCatalog;
-	// if (true) {
-	// consumeItemCatalog = consumeRoom.GetProductItemForConsumeWithNewPrice(this.money, 1);
-	// if (consumeItemCatalog == null) throw new HumanSimulationException("TryConsume : There are no eat place to get food");
-	// if (consumeItemCatalog.itemDef instanceof ConsumeDef == false) throw new HumanSimulationException(
-	// "TryConsume : There are no eat place to get food");
-	// if (consumeItemCatalog.numPick == 0) throw new HumanSimulationException("TryConsume : There are no eat place to get food");
-	// }
-	//
-	// Consume(consumeItemCatalog, true);
-	//
-	// double moneyEnd = this.money;
-	// long timeEnd = this.timeSimulationComplete;
-	// double utilEnd = this.ComputeUtility();
-	//
-	// boolean realFlag = consumeRoom.IsReal();
-	//
-	// ConsumeResult res = new ConsumeResult(consumeRoom, consumeItemCatalog, moneyStart, moneyEnd, timeStart, timeEnd, utilStart, utilEnd, realFlag);
-	// return res;
-	// }
-	//
-	// public void DoConsume(ConsumeResult res) throws Exception {
-	// System.out.println(String.format("DoConsume : Consumed %s with $%f at %s", res.itemCatalog.itemDef.GetName(), res.itemCatalog.price,
-	// res.shopRoom.GetName()));
-	// Move(res.shopRoom);
-	// Consume(res.itemCatalog, false);
-	// }
-
-	// //////////////////////////////////////////////////////////
-	// //////////////////////////////////////////////////////////
 	// アイテムを消費してみる。労働＋現物支給。
 	// //////////////////////////////////////////////////////////
 	// //////////////////////////////////////////////////////////
@@ -623,6 +559,12 @@ public class HumanStatus {
 		public int hashCode() {
 			int ret = this.factoryRoom.hashCode() + this.itemCatalog.itemDef.GetName().hashCode();
 			return ret;
+		}
+
+		public void Dump() {
+			super.Dump();
+			System.out.println(String.format("自作して消費する：%sで%sを%f個作って消費した。作成に%d分、消費に%d分かかった。", this.factoryRoom.GetName(), this.cfm.itemDef.GetName(),
+					this.itemCatalog.numPick, this.cfm.duration, this.itemCatalog.durationToBuy));
 		}
 	}
 
@@ -659,12 +601,19 @@ public class HumanStatus {
 			if (consumeItemCatalog.numPick == 0) throw new HumanSimulationException("TryConsumeWithWork : There are no eat place to get food");
 		}
 
+		// TODO
+		if (tempFlag == 0) {
+			if (cfm.itemDef.GetName().equals("water")) throw new HumanSimulationException("no ability");
+		} else if (tempFlag == 1) {
+			if (cfm.itemDef.GetName().equals("fish")) throw new HumanSimulationException("no ability");
+		}
+
 		double moneyStart = this.money;
 		long timeStart = this.timeSimulationComplete;
 		double utilStart = this.ComputeUtility();
 
 		Move(consumeRoom);
-		ConsumeWithMake(consumeItemCatalog, cfm, true);
+		MakeInKindAndConsume(consumeItemCatalog, cfm, true);
 
 		double moneyEnd = this.money;
 		long timeEnd = this.timeSimulationComplete;
@@ -677,15 +626,16 @@ public class HumanStatus {
 		return realFlag;
 	}
 
-	// public void DoConsumeWithWork(ConsumeWithWorkResult res) throws Exception {
-	// System.out.println(String.format("DoConsumeWithWork : Consumed %s at %s", res.itemCatalog.itemDef.GetName(), res.factoryRoom.GetName()));
-	//
-	// Move(res.factoryRoom);
-	// ConsumeWithMake(res.itemCatalog, res.cfm, false);
-	// }
+	// //////////////////////////////////////////////////////////
+	// //////////////////////////////////////////////////////////
+	// 行動最小単位
+	// //////////////////////////////////////////////////////////
+	// //////////////////////////////////////////////////////////
 
 	public void DoAction(ArrayList<TryResult> sequence) throws Exception {
+		System.out.println("\n====\n");
 		for (TryResult res : sequence) {
+			res.Dump();
 			if (res instanceof TryBuyResult) {
 				TryBuyResult result = (TryBuyResult) res;
 				this.Move(result.shopRoom);
@@ -705,18 +655,12 @@ public class HumanStatus {
 			} else if (res instanceof TryConsumeWithWorkResult) {
 				TryConsumeWithWorkResult result = (TryConsumeWithWorkResult) res;
 				this.Move(result.factoryRoom);
-				this.ConsumeWithMake(result.itemCatalog, result.cfm, false);
+				this.MakeInKindAndConsume(result.itemCatalog, result.cfm, false);
 			} else {
 				throw new Exception("fatail error");
 			}
 		}
 	}
-
-	// //////////////////////////////////////////////////////////
-	// //////////////////////////////////////////////////////////
-	// 行動最小単位
-	// //////////////////////////////////////////////////////////
-	// //////////////////////////////////////////////////////////
 
 	public void Nop() throws Exception {
 		long timeDelta = 60 * 8;
@@ -741,19 +685,8 @@ public class HumanStatus {
 
 		shopRoom.BuyProductItem(this.timeSimulationComplete, itemCatalog, simulation);
 		timeSimulationComplete += itemCatalog.durationToBuy;
-		this.utilityManager.AddUtility(itemCatalog.itemDef.GetUtilities(), this.timeSimulationComplete);
+		this.utilityManager.AddUtility(itemCatalog.itemDef.GetUtilities(), itemCatalog.numPick, this.timeSimulationComplete);
 		money -= itemCatalog.price * itemCatalog.numPick;
-
-		this.utilityMovingAverage.Add(this.timeSimulationComplete, this.ComputeUtility());
-	}
-
-	public void ConsumeWithMake(ItemCatalog itemCatalog, CallForMakerInKind cfm, boolean simulation) throws Exception {
-		FactoryRoom factoryRoom = (FactoryRoom) this.currentRoom;
-
-		Item item = factoryRoom.MakeInKind(cfm, this.timeSimulationComplete, simulation);
-		this.timeSimulationComplete += cfm.duration;
-		this.timeSimulationComplete += itemCatalog.durationToBuy;
-		this.utilityManager.AddUtility(item.GetItemDef().GetUtilities(), this.timeSimulationComplete);
 
 		this.utilityMovingAverage.Add(this.timeSimulationComplete, this.ComputeUtility());
 	}
@@ -765,7 +698,6 @@ public class HumanStatus {
 		this.inventory.Put(item);
 
 		money -= itemCatalog.price * itemCatalog.numPick;
-		if (this.money < 0) throw new HumanSimulationException("TryTrader : no money");
 
 		timeSimulationComplete += itemCatalog.durationToBuy;
 
@@ -791,6 +723,17 @@ public class HumanStatus {
 
 		money += cfm.gain;
 		timeSimulationComplete += cfm.duration;
+
+		this.utilityMovingAverage.Add(this.timeSimulationComplete, this.ComputeUtility());
+	}
+
+	public void MakeInKindAndConsume(ItemCatalog itemCatalog, CallForMakerInKind cfm, boolean simulation) throws Exception {
+		FactoryRoom factoryRoom = (FactoryRoom) this.currentRoom;
+
+		Item item = factoryRoom.MakeInKind(cfm, this.timeSimulationComplete, simulation);
+		this.timeSimulationComplete += cfm.duration;
+		this.timeSimulationComplete += itemCatalog.durationToBuy;
+		this.utilityManager.AddUtility(item.GetItemDef().GetUtilities(), item.GetQuantity(), this.timeSimulationComplete);
 
 		this.utilityMovingAverage.Add(this.timeSimulationComplete, this.ComputeUtility());
 	}

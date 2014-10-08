@@ -31,8 +31,8 @@ stocking.durationForDeliver = 30
 shop.durationToSell = 30
 
 shop.product = water
-shop.capacity = 10000
-shop.lotmax = 10
+shop.capacity = 1000
+shop.lotmax = 100
 
 
 
@@ -41,7 +41,7 @@ shop.lotmax = 10
 # for factory
 ###################################
 factory.skill = noskill
-factory.durationForMake = 480
-factory.numProductPerMake = 5
-factory.capacityMaker = 1000000
+factory.durationForMake = 240
+factory.numProductPerMake = 1
+factory.capacityMaker = 10000
 

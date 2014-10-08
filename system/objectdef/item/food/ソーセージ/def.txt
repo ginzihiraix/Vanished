@@ -26,8 +26,8 @@ weight = 0.1
 # このスコアsの効用uは、u(s) = s^pで計算できる。ただし、pは、u(2) - u(1) = 1/2を満たすように設定された値。
 ########################################################### 
 utility.duration = 1day
-utility.power.eat.food_meat.half = 0.2
-utility.power.eat.food_good.half = 0.2
+utility.power.eat.food_meat.quarter = 0.2
+utility.power.eat.food_good.quarter = 0.2
 
 
 

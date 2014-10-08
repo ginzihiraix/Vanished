@@ -41,7 +41,7 @@ public class ShopRoom extends DeliverRoom {
 		public ItemDef itemDef;
 		public double price;
 		public double numPick;
-		public double durationToBuy;
+		public long durationToBuy;
 
 		public ItemCatalog(ItemDef itemDef, double price, double numConsume, long duration) {
 			this.itemDef = itemDef;
@@ -71,7 +71,8 @@ public class ShopRoom extends DeliverRoom {
 
 		// 購入に要する時間を決める。
 		// TODO:個数に比例してかかる。仮
-		long duration = (long) (shopRoomDef.durationToSell * minNumPick) + 1;
+		// long duration = (long) (shopRoomDef.durationToSell * minNumPick) + 1;
+		long duration = shopRoomDef.durationToSell;
 
 		ItemCatalog itemCatalog = new ItemCatalog(this.shopStockManager.stockManagerInfo.itemDef, price, minNumPick, duration);
 		return itemCatalog;
@@ -79,7 +80,7 @@ public class ShopRoom extends DeliverRoom {
 
 	public ItemCatalog GetProductItemForConsumeWithNewPrice(double maxMoney, double maxNumPick) {
 		// 価格を決める。
-		double price = this.shopStockManager.price * Math.pow(1.02, OtherUtility.rand.nextInt(11) - 11 / 2);
+		double price = this.shopStockManager.price * Math.pow(1.005, OtherUtility.rand.nextInt(41) - 41 / 2);
 		return this.GetProductItem(maxMoney, maxNumPick, price);
 	}
 
@@ -88,7 +89,7 @@ public class ShopRoom extends DeliverRoom {
 	}
 
 	public ItemCatalog GetProductItemForUtilityEvaluation(double maxMoney, double maxNumPick) {
-		double price = this.shopStockManager.price * Math.pow(1.02, OtherUtility.rand.nextInt(11) - 11 / 2);
+		double price = this.shopStockManager.price * Math.pow(1.005, OtherUtility.rand.nextInt(41) - 41 / 2);
 		return this.GetProductItem(maxMoney, maxNumPick, price);
 	}
 
