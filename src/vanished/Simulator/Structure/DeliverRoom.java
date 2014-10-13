@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.Map.Entry;
 import java.util.TreeMap;
 
-import vanished.Simulator.OtherUtility;
 import vanished.Simulator.Item.ItemDef;
 import vanished.Simulator.Item.ItemDefComparator;
 
@@ -32,7 +31,7 @@ public class DeliverRoom extends Room {
 			StockManager sm = e.getValue();
 			System.out.println("material name : " + itemDef.GetName());
 			System.out.println("material stock : " + sm.GetNumStock());
-			System.out.println("material price : " + sm.price);
+			System.out.println("material price : " + sm.GetPriceWithRate());
 		}
 	}
 
@@ -57,18 +56,22 @@ public class DeliverRoom extends Room {
 		// 欲しいアイテムリストを返す。
 		for (Entry<ItemDef, StockManager> e : deliverStockManager.entrySet()) {
 			ItemDef itemDef = e.getKey();
-			CallForItem callForItem = this.GetDesiredItemWithNewPrice(itemDef, maxMoney, maxNumPick);
+			CallForItem callForItem = this.GetDesiredItem(itemDef, maxMoney, maxNumPick);
+			if (callForItem == null) continue;
 			callForItemList.add(callForItem);
 		}
 		return callForItemList;
 	}
 
 	// 買い取り情報を取得する。
-	private CallForItem GetDesiredItem(ItemDef itemDef, double maxMoney, double maxNumPick, double price) {
+	public CallForItem GetDesiredItem(ItemDef itemDef, double maxMoney, double maxNumPick) {
 		DeliverRoomDef deliverRoomDef = (DeliverRoomDef) roomDef;
 
 		StockManager sm = deliverStockManager.get(itemDef);
 		if (sm == null) return null;
+		if (sm.IsOpen() == false) return null;
+
+		double price = sm.GetPriceWithRate();
 
 		// 購入する個数を決定する。
 		double minNumPick = Double.MAX_VALUE;
@@ -85,23 +88,15 @@ public class DeliverRoom extends Room {
 		}
 
 		// TODO:購入時間を計算する。個数に比例する。
-		// long durationToSell = (long) (deliverRoomDef.durationForDeliver * minNumPick) + 1L;
 		long durationToSell = deliverRoomDef.durationForDeliver;
 
 		CallForItem callForItem = new CallForItem(itemDef, price, minNumPick, durationToSell);
 		return callForItem;
 	}
 
-	public CallForItem GetDesiredItemWithNewPrice(ItemDef itemDef, double maxMoney, double maxNumPick) {
+	public void SetMaterialPriceRate(ItemDef itemDef, double rate) {
 		StockManager sm = deliverStockManager.get(itemDef);
-		if (sm == null) return null;
-		// 価格を決定する。
-		double price = sm.price * Math.pow(1.005, OtherUtility.rand.nextInt(81) - 81 / 2);
-		return this.GetDesiredItem(itemDef, maxMoney, maxNumPick, price);
-	}
-
-	public CallForItem GetDesiredItemWithFixedPrice(ItemDef itemDef, double maxMoney, double maxNumPick, double price) {
-		return GetDesiredItem(itemDef, maxMoney, maxNumPick, price);
+		sm.SetPriceRate(rate);
 	}
 
 	// アイテムを売る。
@@ -109,6 +104,8 @@ public class DeliverRoom extends Room {
 
 		// アイテムを格納する。
 		StockManager sm = deliverStockManager.get(callForItem.itemDef);
+		if (sm.IsOpen() == false) throw new Exception("aaaa");
+
 		sm.Put(timeNow, callForItem.numPick, simulation);
 
 		if (simulation == false) {
@@ -119,6 +116,7 @@ public class DeliverRoom extends Room {
 
 	// 商品価格に対してフォードバックを与える。いくらだったらNo1の選択肢になったのか、各Humanがフィードバックを与える。
 	public void FeedbackAboutDeliverPrice(ItemDef itemDef, double price, double quantity) {
+		// System.out.println("FeedbackAboutDeliverPrice : " + this.roomDef.name + ", " + itemDef.GetName() + ", " + price + ", " + quantity);
 		StockManager sm = deliverStockManager.get(itemDef);
 		sm.Feedback(price, quantity);
 	}

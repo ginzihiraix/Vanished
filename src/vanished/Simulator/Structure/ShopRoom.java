@@ -1,7 +1,6 @@
 package vanished.Simulator.Structure;
 
 import vanished.Simulator.ExponentialMovingAverage;
-import vanished.Simulator.OtherUtility;
 import vanished.Simulator.Item.Item;
 import vanished.Simulator.Item.ItemDef;
 
@@ -21,12 +20,12 @@ public class ShopRoom extends DeliverRoom {
 		System.out.println("===Shop Department===");
 		System.out.println("product name : " + this.shopStockManager.stockManagerInfo.itemDef.GetName());
 		System.out.println("product stock : " + this.shopStockManager.GetNumStock());
-		System.out.println("product price : " + this.shopStockManager.price);
+		System.out.println("product price : " + this.shopStockManager.GetPriceWithRate());
 	}
 
 	// 販売価格を取得する。
 	public double GetProductItemPrice() {
-		return shopStockManager.price;
+		return shopStockManager.GetPriceWithRate();
 	}
 
 	public double GetProductItemStock() {
@@ -35,6 +34,10 @@ public class ShopRoom extends DeliverRoom {
 
 	public String GetProductItemName() {
 		return shopStockManager.stockManagerInfo.itemDef.GetName();
+	}
+
+	public ItemDef GetProductItemDef() {
+		return shopStockManager.stockManagerInfo.itemDef;
 	}
 
 	public class ItemCatalog {
@@ -52,8 +55,10 @@ public class ShopRoom extends DeliverRoom {
 	}
 
 	// 販売商品の一覧を取得する。
-	public ItemCatalog GetProductItem(double maxMoney, double maxNumPick, double price) {
+	private ItemCatalog GetProductItem(double maxMoney, double maxNumPick, double price) {
 		ShopRoomDef shopRoomDef = (ShopRoomDef) roomDef;
+
+		if (this.shopStockManager.IsOpen() == false) return null;
 
 		// 個数を決める。
 		double minNumPick = Double.MAX_VALUE;
@@ -78,28 +83,21 @@ public class ShopRoom extends DeliverRoom {
 		return itemCatalog;
 	}
 
-	public ItemCatalog GetProductItemForConsumeWithNewPrice(double maxMoney, double maxNumPick) {
+	public ItemCatalog GetProductItem(double maxMoney, double maxNumPick) {
 		// 価格を決める。
-		double price = this.shopStockManager.price * Math.pow(1.005, OtherUtility.rand.nextInt(41) - 41 / 2);
+		double price = this.shopStockManager.GetPriceWithRate();
 		return this.GetProductItem(maxMoney, maxNumPick, price);
 	}
 
-	public ItemCatalog GetProductItemWithFixedPrice(double maxMoney, double maxNumPick, double price) {
-		return this.GetProductItem(maxMoney, maxNumPick, price);
-	}
-
-	public ItemCatalog GetProductItemForUtilityEvaluation(double maxMoney, double maxNumPick) {
-		double price = this.shopStockManager.price * Math.pow(1.005, OtherUtility.rand.nextInt(41) - 41 / 2);
-		return this.GetProductItem(maxMoney, maxNumPick, price);
-	}
-
-	public ItemCatalog GetProductItemForMakeInKind(double maxNumPick) {
-		return this.GetProductItem(Double.MAX_VALUE, maxNumPick, 0);
+	public void SetProductPriceRate(double rate) {
+		this.shopStockManager.SetPriceRate(rate);
 	}
 
 	// 商品を買う
 	public Item BuyProductItem(long timeNow, ItemCatalog itemCatalog, boolean simulation) throws Exception {
 		ShopRoomDef shopRoomDef = (ShopRoomDef) roomDef;
+
+		if (this.shopStockManager.IsOpen() == false) throw new Exception("aaa");
 
 		this.Enter(timeNow, shopRoomDef.durationToSell, simulation);
 
@@ -117,6 +115,7 @@ public class ShopRoom extends DeliverRoom {
 
 	// 商品価格に対してフォードバックを与える。いくらだったらNo1の選択肢になったのか、各Humanがフィードバックを与える。
 	public void FeedbackAboutProductPrice(double price, double quantity) {
+		// System.out.println("FeedbackAboutProductPrice : " + this.roomDef.name + ", " + price + ", " + quantity);
 		this.shopStockManager.Feedback(price, quantity);
 	}
 
@@ -127,14 +126,6 @@ public class ShopRoom extends DeliverRoom {
 	// ////////////////////////////////////////////////////////
 
 	private ExponentialMovingAverage productInputMoneyEMA = new ExponentialMovingAverage(60L * 24L * 10, true);
-
-	// public ArrayList<EventLog> GetNumProcutLog(int numSample) throws Exception {
-	// return this.shopStockManager.GetNumMakeLog(numSample);
-	// }
-	//
-	// public ArrayList<EventLog> GetNumProcutLog() throws Exception {
-	// return this.shopStockManager.GetNumMakeLog();
-	// }
 
 	public double GetProductInputStockEMA(long timeNow) {
 		return this.shopStockManager.GetInputStockEMA(timeNow);

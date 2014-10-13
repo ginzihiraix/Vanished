@@ -1,7 +1,6 @@
 package vanished.Simulator.Structure;
 
 import vanished.Simulator.ExponentialMovingAverage;
-import vanished.Simulator.OtherUtility;
 import vanished.Simulator.Item.Item;
 import vanished.Simulator.Item.ItemDef;
 
@@ -11,14 +10,41 @@ public class StockManager {
 
 	StockManagerInfo stockManagerInfo;
 
-	double price;
+	private double price;
+	private double priceRate = 1;
+
+	private boolean open = true;
 
 	private double numStock;
 
 	public StockManager(ItemDef itemDef, StockManagerInfo stockManagerInfo) {
 		this.itemDef = itemDef;
 		this.stockManagerInfo = stockManagerInfo;
-		price = 1 + OtherUtility.RandGaussian() * 0.1;
+		price = 1;
+	}
+
+	public boolean IsOpen() {
+		return open;
+	}
+
+	public void Close() {
+		open = false;
+	}
+
+	public void Open() {
+		open = true;
+	}
+
+	public double GetPriceWithRate() {
+		return price * priceRate;
+	}
+
+	public void SetPrice(double price) {
+		this.price = price;
+	}
+
+	public void SetPriceRate(double priceRate) {
+		this.priceRate = priceRate;
 	}
 
 	public double GetNumStock() {

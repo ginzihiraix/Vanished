@@ -52,6 +52,6 @@ factory.material.fish.amount = 1
 factory.material.water.amount = 1
 
 factory.skill = noskill
-factory.durationForMake = 480
-factory.numProductPerMake = 5
-factory.capacityMaker = 100000
+factory.durationForMake = 240
+factory.numProductPerMake = 3
+factory.capacityMaker = 10000

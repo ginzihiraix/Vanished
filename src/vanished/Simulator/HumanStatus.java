@@ -118,6 +118,7 @@ public class HumanStatus {
 	public void Dump() throws Exception {
 		System.out.println(String.format("$%f, $%f/day", money, wageMovingAverage.GetAverage(this.timeSimulationComplete) * 60 * 24));
 		System.out.println(String.format("%f[util], %f[util]", this.ComputeUtility(), utilityMovingAverage.GetAverage(this.timeSimulationComplete)));
+		System.out.println(String.format("time : %d", this.timeSimulationComplete));
 	}
 
 	public boolean ShouldWork() {
@@ -132,6 +133,396 @@ public class HumanStatus {
 			return false;
 		}
 	}
+
+	// TODO:店の選択肢は、currentRoomを中心として選ぶ。
+	public class Action {
+	}
+
+	public class ExecuteResult {
+	}
+
+	public ArrayList<ExecuteResult> ExecuteAction(ArrayList<Action> resList, boolean simulation) throws Exception {
+
+		ArrayList<ExecuteResult> ret = new ArrayList<ExecuteResult>();
+
+		for (Action res : resList) {
+			if (res instanceof TraderAction) {
+				TraderAction result = (TraderAction) res;
+
+				// ランダムにほしがってる商品情報を選ぶ。
+				CallForItem callForItem = result.deliverRoom.GetDesiredItem(result.itemDef, Double.MAX_VALUE, Double.MAX_VALUE);
+
+				// 商品情報を取得する。
+				ItemCatalog itemCatalog = result.shopRoom.GetProductItem(Double.MAX_VALUE, Double.MAX_VALUE);
+
+				// 個数を調整する。
+				{
+					double numPick = Double.MAX_VALUE;
+					if (itemCatalog.numPick < numPick) numPick = itemCatalog.numPick;
+					if (callForItem.numPick < numPick) numPick = callForItem.numPick;
+					itemCatalog = result.shopRoom.GetProductItem(Double.MAX_VALUE, numPick);
+					callForItem = result.deliverRoom.GetDesiredItem(callForItem.itemDef, Double.MAX_VALUE, numPick);
+				}
+
+				// 買う
+				this.Move(result.shopRoom);
+				this.Buy(itemCatalog, simulation);
+
+				// 売る
+				this.Move(result.deliverRoom);
+				this.Sell(callForItem, simulation);
+
+				if (this.money < 0) throw new HumanSimulationException("TryTrader : no money");
+
+				TraderExecuteResult eres = new TraderExecuteResult(result, itemCatalog, callForItem);
+				ret.add(eres);
+			} else if (res instanceof MakerAction) {
+				MakerAction result = (MakerAction) res;
+
+				CallForMaker cfm = result.factoryRoom.GetDesiredMaker(Double.MAX_VALUE);
+				this.Move(result.factoryRoom);
+				this.Make(cfm, simulation);
+
+				MakerExecuteResult eres = new MakerExecuteResult(result, cfm);
+				ret.add(eres);
+			} else if (res instanceof ConsumerAction) {
+				ConsumerAction result = (ConsumerAction) res;
+
+				ItemCatalog consumeItemCatalog = result.shopRoom.GetProductItem(this.money, Double.MAX_VALUE);
+				this.Move(result.shopRoom);
+				this.Consume(consumeItemCatalog, simulation);
+
+				ConsumerExecuteResult eres = new ConsumerExecuteResult(result, consumeItemCatalog);
+				ret.add(eres);
+			} else if (res instanceof MakeAndConsumeAction) {
+				MakeAndConsumeAction result = (MakeAndConsumeAction) res;
+
+				CallForMakerInKind cfm = result.makeAndConsumeRoom.GetDesiredMakerInKind(Double.MAX_VALUE);
+				ItemCatalog consumeItemCatalog = result.makeAndConsumeRoom.GetProductItem(Double.MAX_VALUE, Double.MAX_VALUE);
+				this.Move(result.makeAndConsumeRoom);
+				this.MakeInKindAndConsume(consumeItemCatalog, cfm, simulation);
+
+				MakeAndConsumeExecuteResult eres = new MakeAndConsumeExecuteResult(result, cfm, consumeItemCatalog);
+				ret.add(eres);
+			} else {
+				throw new Exception("fatail error");
+			}
+		}
+
+		return ret;
+	}
+
+	// //////////////////////////////////////////////////////////
+	// //////////////////////////////////////////////////////////
+	// Traderをサンプリングしてみる。
+	// //////////////////////////////////////////////////////////
+	// //////////////////////////////////////////////////////////
+
+	public class TraderAction extends Action {
+		ShopRoom shopRoom;
+		DeliverRoom deliverRoom;
+		ItemDef itemDef;
+
+		public TraderAction(ShopRoom shopRoom, DeliverRoom deliverRoom, ItemDef itemDef) {
+
+			this.shopRoom = shopRoom;
+			this.deliverRoom = deliverRoom;
+			this.itemDef = itemDef;
+		}
+
+		public void Dump() {
+			System.out.println(String.format("転売する：%sから%sへ、%sを転売する。", shopRoom.GetName(), deliverRoom.GetName(), itemDef.GetName()));
+		}
+	}
+
+	public class TraderExecuteResult extends ExecuteResult {
+		TraderAction action;
+		ItemCatalog itemCatalog;
+		CallForItem callForItem;
+
+		public TraderExecuteResult(TraderAction sres, ItemCatalog itemCatalog, CallForItem callForItem) {
+			this.action = sres;
+			this.itemCatalog = itemCatalog;
+			this.callForItem = callForItem;
+		}
+	}
+
+	public boolean SampleTraderAndConsume(boolean realFlag, ArrayList<Action> ret) throws Exception {
+		realFlag = this.SampleTrader(realFlag, ret);
+		realFlag = this.SampleConsumeWithMoney(realFlag, ret);
+		return realFlag;
+	}
+
+	private boolean SampleTrader(boolean realFlag, ArrayList<Action> ret) throws Exception {
+		// System.out.println("TryTrader");
+
+		// ランダムにデリバー先を選ぶ。
+		DeliverRoom deliverRoom;
+		{
+			ArrayList<DeliverRoom> list = mm.GetDeliverableRoomList(this.moveMethod, HumanDef.maxMoveTimeForTrade, this.currentRoom,
+					Double.MAX_VALUE, Double.MAX_VALUE, realFlag == false);
+			int num = list.size();
+			if (num == 0) throw new HumanSimulationException("TryTrader : There are no deliverable room who want to buy something");
+			int index = OtherUtility.rand.nextInt(num);
+			deliverRoom = list.get(index);
+			if (deliverRoom.IsReal() == false) {
+				realFlag = false;
+			}
+		}
+
+		// ランダムにほしがってる商品情報を選ぶ。
+		CallForItem callForItem;
+		{
+			ArrayList<CallForItem> listOrg = deliverRoom.GetDesiredItemList(Double.MAX_VALUE, Double.MAX_VALUE);
+			ArrayList<CallForItem> list = new ArrayList<CallForItem>();
+			for (CallForItem callForItem2 : listOrg) {
+				if (callForItem2.numPick == 0) continue;
+				list.add(callForItem2);
+			}
+			int num = list.size();
+			if (num == 0) throw new HumanSimulationException("TryTrader : There are no items desired by the deliverRoom");
+			int index = OtherUtility.rand.nextInt(num);
+			callForItem = list.get(index);
+		}
+
+		// ランダムに購入店を選ぶ。
+		ShopRoom shopRoom;
+		{
+			ArrayList<ShopRoom> list = mm.GetShopRoomList(this.moveMethod, HumanDef.maxMoveTimeForTrade, this.currentRoom, callForItem.itemDef,
+					Double.MAX_VALUE, Double.MAX_VALUE, realFlag == false);
+			int num = list.size();
+			if (num == 0) throw new HumanSimulationException("TryTrader : There are no shop to buy the desired items");
+			int index = OtherUtility.rand.nextInt(num);
+			shopRoom = list.get(index);
+			if (shopRoom.IsReal() == false) {
+				realFlag = false;
+			}
+		}
+
+		ret.add(new TraderAction(shopRoom, deliverRoom, callForItem.itemDef));
+
+		return realFlag;
+	}
+
+	// //////////////////////////////////////////////////////////
+	// //////////////////////////////////////////////////////////
+	// Makerをサンプリングしてみる。
+	// //////////////////////////////////////////////////////////
+	// //////////////////////////////////////////////////////////
+
+	public class MakerAction extends Action {
+		FactoryRoom factoryRoom;
+		ItemDef itemDef;
+
+		public MakerAction(FactoryRoom factoryRoom, ItemDef itemDef) {
+			this.factoryRoom = factoryRoom;
+			this.itemDef = itemDef;
+		}
+
+		public void Dump() {
+			System.out.println(String.format("製造する：%sで%sを製造する。", factoryRoom.GetName(), itemDef.GetName()));
+		}
+	}
+
+	public class MakerExecuteResult extends ExecuteResult {
+		MakerAction action;
+		CallForMaker caalForMaker;
+
+		public MakerExecuteResult(MakerAction sres, CallForMaker cfm) {
+			this.action = sres;
+			this.caalForMaker = cfm;
+		}
+	}
+
+	public boolean SampleMakerAndConsume(boolean realFlag, ArrayList<Action> ret) throws Exception {
+		realFlag = this.SampleMaker(realFlag, ret);
+		realFlag = this.SampleConsumeWithMoney(realFlag, ret);
+		return realFlag;
+	}
+
+	private boolean SampleMaker(boolean realFlag, ArrayList<Action> ret) throws Exception {
+		// System.out.println("TryMaker");
+
+		// ランダムに労働場所を選ぶ。
+		FactoryRoom factoryRoom = null;
+		{
+			ArrayList<FactoryRoom> list = mm.GetFactoryRoomList(this.moveMethod, HumanDef.maxMoveTimeForWork, this.currentRoom, realFlag == false);
+			int num = list.size();
+			if (num == 0) throw new HumanSimulationException("TryMaker : There are no work place as maker");
+			int index = OtherUtility.rand.nextInt(num);
+			factoryRoom = list.get(index);
+			if (factoryRoom.IsReal() == false) {
+				realFlag = false;
+			}
+		}
+
+		// 要求している労働者を調べる。
+		CallForMaker cfm = null;
+		{
+			cfm = factoryRoom.GetDesiredMaker(Double.MAX_VALUE);
+			if (cfm == null) throw new HumanSimulationException("TryMaker : There are no skill position in the selected factory.");
+			// 自分のスキルで実行可能か調べる。
+			if (myskill.hasAbility(cfm.skill) == false) throw new HumanSimulationException(
+					"TryMaker : There are no skill position in the selected factory.");
+		}
+
+		// TODO
+		if (tempFlag == 0) {
+			if (cfm.itemDef.GetName().equals("water")) throw new HumanSimulationException("no ability");
+		} else if (tempFlag == 1) {
+			if (cfm.itemDef.GetName().equals("fish")) throw new HumanSimulationException("no ability");
+		}
+
+		ret.add(new MakerAction(factoryRoom, cfm.itemDef));
+
+		return realFlag;
+	}
+
+	// //////////////////////////////////////////////////////////
+	// //////////////////////////////////////////////////////////
+	// Consumerをサンプリングしてみる。
+	// //////////////////////////////////////////////////////////
+	// //////////////////////////////////////////////////////////
+
+	public class ConsumerAction extends Action {
+		ShopRoom shopRoom;
+		ItemDef itemDef;
+
+		public ConsumerAction(ShopRoom shopRoom, ItemDef itemDef) {
+			this.shopRoom = shopRoom;
+			this.itemDef = itemDef;
+		}
+
+		public void Dump() {
+			System.out.println(String.format("消費する：%sで%sを消費する。", shopRoom.GetName(), itemDef.GetName()));
+		}
+	}
+
+	public class ConsumerExecuteResult extends ExecuteResult {
+		ConsumerAction action;
+		ItemCatalog itemCatalog;
+
+		public ConsumerExecuteResult(ConsumerAction action, ItemCatalog itemCatalog) {
+			this.action = action;
+			this.itemCatalog = itemCatalog;
+		}
+	}
+
+	private boolean SampleConsumeWithMoney(boolean realFlag, ArrayList<Action> ret) throws Exception {
+		// System.out.println("TryConsumeWithAllMoney");
+
+		// 消費する場所を決定する。
+		ShopRoom consumeRoom;
+		if (true) {
+			ArrayList<ShopRoom> list = mm.GetConsumableRoomList(moveMethod, HumanDef.maxMoveTimeForConsume, currentRoom, Double.MAX_VALUE,
+					Double.MAX_VALUE, realFlag == false);
+			int num = list.size();
+			if (num == 0) throw new HumanSimulationException("TryConsume : There are no eat place to get food");
+			int index = OtherUtility.rand.nextInt(num);
+			consumeRoom = list.get(index);
+
+			if (consumeRoom.IsReal() == false) {
+				realFlag = false;
+			}
+		}
+
+		// 消費するアイテムを決定する。
+		ItemCatalog consumeItemCatalog;
+		if (true) {
+			consumeItemCatalog = consumeRoom.GetProductItem(Double.MAX_VALUE, Double.MAX_VALUE);
+			if (consumeItemCatalog == null) throw new HumanSimulationException("TryConsume : There are no eat place to get food");
+			if (consumeItemCatalog.itemDef instanceof ConsumeDef == false) throw new HumanSimulationException(
+					"TryConsume : There are no eat place to get food");
+			if (consumeItemCatalog.numPick == 0) throw new HumanSimulationException("TryConsume : There are no eat place to get food");
+		}
+
+		ret.add(new ConsumerAction(consumeRoom, consumeItemCatalog.itemDef));
+
+		return realFlag;
+	}
+
+	// //////////////////////////////////////////////////////////
+	// //////////////////////////////////////////////////////////
+	// WorkInKindをサンプリングしてみる。
+	// //////////////////////////////////////////////////////////
+	// //////////////////////////////////////////////////////////
+
+	public class MakeAndConsumeAction extends Action {
+		FactoryRoom makeAndConsumeRoom;
+		ItemDef itemDef;
+
+		public MakeAndConsumeAction(FactoryRoom makeAndConsumeRoom, ItemDef itemDef) {
+			this.makeAndConsumeRoom = makeAndConsumeRoom;
+			this.itemDef = itemDef;
+		}
+
+		public void Dump() {
+			System.out.println(String.format("労働・消費する：%sで%sを消費する。", makeAndConsumeRoom.GetName(), itemDef.GetName()));
+		}
+	}
+
+	public class MakeAndConsumeExecuteResult extends ExecuteResult {
+		MakeAndConsumeAction action;
+		CallForMakerInKind callForMaker;
+		ItemCatalog itemCatalog;
+
+		public MakeAndConsumeExecuteResult(MakeAndConsumeAction action, CallForMakerInKind callForMaker, ItemCatalog itemCatalog) {
+			this.action = action;
+			this.callForMaker = callForMaker;
+			this.itemCatalog = itemCatalog;
+		}
+	}
+
+	public boolean SampleConsumeWithWork(boolean realFlag, ArrayList<Action> ret) throws Exception {
+		// System.out.println("TryConsumeWithWork");
+
+		// 消費する場所を決定する。
+		FactoryRoom consumeRoom;
+		if (true) {
+			ArrayList<FactoryRoom> list = mm.GetConsumableAndMakableRoomList(moveMethod, HumanDef.maxMoveTimeForConsume, currentRoom,
+					Double.MAX_VALUE, Double.MAX_VALUE, realFlag == false);
+			int num = list.size();
+			if (num == 0) throw new HumanSimulationException("TryConsume : There are no eat place to get food");
+			int index = OtherUtility.rand.nextInt(num);
+			consumeRoom = list.get(index);
+			if (consumeRoom.IsReal() == false) {
+				realFlag = false;
+			}
+		}
+
+		CallForMakerInKind callForMaker;
+		{
+			callForMaker = consumeRoom.GetDesiredMakerInKind(Double.MAX_VALUE);
+			if (this.myskill.hasAbility(callForMaker.skill) == false) throw new HumanSimulationException("TryConsumeWithWork : no skill");
+			if (callForMaker.numMake == 0) throw new HumanSimulationException("TryConsumeWithWork : no space to make products");
+		}
+
+		// 消費するアイテムを決定する。
+		ItemCatalog consumeItemCatalog;
+		if (true) {
+			consumeItemCatalog = consumeRoom.GetProductItem(Double.MAX_VALUE, Double.MAX_VALUE);
+			if (consumeItemCatalog.itemDef instanceof ConsumeDef == false) throw new HumanSimulationException(
+					"TryConsumeWithWork : There are no eat place to get food");
+			if (consumeItemCatalog.numPick == 0) throw new HumanSimulationException("TryConsumeWithWork : There are no eat place to get food");
+		}
+
+		// TODO
+		if (tempFlag == 0) {
+			if (callForMaker.itemDef.GetName().equals("water")) throw new HumanSimulationException("no ability");
+		} else if (tempFlag == 1) {
+			if (callForMaker.itemDef.GetName().equals("fish")) throw new HumanSimulationException("no ability");
+		}
+
+		ret.add(new MakeAndConsumeAction(consumeRoom, callForMaker.itemDef));
+
+		return realFlag;
+	}
+
+	// //////////////////////////////////////////////////////////
+	// //////////////////////////////////////////////////////////
+	// Traderの仕事をやってみる。
+	// //////////////////////////////////////////////////////////
+	// //////////////////////////////////////////////////////////
 
 	public class TryResult {
 		double moneyStart;
@@ -201,7 +592,6 @@ public class HumanStatus {
 					this.callForItem.itemDef.GetName(), this.callForItem.numPick, this.callForItem.price * this.callForItem.numPick,
 					this.callForItem.durationToSell));
 		}
-
 	}
 
 	public boolean TryTraderAndConsume(boolean realFlag, ArrayList<TryResult> ret) throws Exception {
@@ -257,15 +647,15 @@ public class HumanStatus {
 		}
 
 		// 商品情報を取得する。
-		ItemCatalog itemCatalog = shopRoom.GetProductItemForConsumeWithNewPrice(Double.MAX_VALUE, Double.MAX_VALUE);
+		ItemCatalog itemCatalog = shopRoom.GetProductItem(Double.MAX_VALUE, Double.MAX_VALUE);
 
 		// 個数を調整する。
 		{
 			double numPick = Double.MAX_VALUE;
 			if (itemCatalog.numPick < numPick) numPick = itemCatalog.numPick;
 			if (callForItem.numPick < numPick) numPick = callForItem.numPick;
-			itemCatalog = shopRoom.GetProductItemWithFixedPrice(Double.MAX_VALUE, numPick, itemCatalog.price);
-			callForItem = deliverRoom.GetDesiredItemWithFixedPrice(callForItem.itemDef, Double.MAX_VALUE, numPick, callForItem.price);
+			itemCatalog = shopRoom.GetProductItem(Double.MAX_VALUE, numPick);
+			callForItem = deliverRoom.GetDesiredItem(callForItem.itemDef, Double.MAX_VALUE, numPick);
 		}
 
 		// 買う
@@ -452,7 +842,7 @@ public class HumanStatus {
 			// 消費するアイテムを決定する。
 			ItemCatalog consumeItemCatalog;
 			if (true) {
-				consumeItemCatalog = consumeRoom.GetProductItemForConsumeWithNewPrice(this.money, Double.MAX_VALUE);
+				consumeItemCatalog = consumeRoom.GetProductItem(this.money, Double.MAX_VALUE);
 				if (consumeItemCatalog == null) throw new HumanSimulationException("TryConsume : There are no eat place to get food");
 				if (consumeItemCatalog.itemDef instanceof ConsumeDef == false) throw new HumanSimulationException(
 						"TryConsume : There are no eat place to get food");
@@ -595,7 +985,7 @@ public class HumanStatus {
 		// 消費するアイテムを決定する。
 		ItemCatalog consumeItemCatalog;
 		if (true) {
-			consumeItemCatalog = consumeRoom.GetProductItemForMakeInKind(cfm.numMake);
+			consumeItemCatalog = consumeRoom.GetProductItem(Double.MAX_VALUE, cfm.numMake);
 			if (consumeItemCatalog.itemDef instanceof ConsumeDef == false) throw new HumanSimulationException(
 					"TryConsumeWithWork : There are no eat place to get food");
 			if (consumeItemCatalog.numPick == 0) throw new HumanSimulationException("TryConsumeWithWork : There are no eat place to get food");

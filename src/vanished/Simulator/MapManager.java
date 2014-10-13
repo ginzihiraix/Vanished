@@ -101,7 +101,7 @@ public class MapManager {
 					long travelTime = this.GetTravelTime(moveMethod, room.GetParentBuilding(), currentRoom.GetParentBuilding());
 					if (travelTime > maxTravelTime) continue;
 
-					if (deliverableRoom.GetDesiredItemWithNewPrice(deliverItem, maxMoney, maxNumPick) == null) continue;
+					if (deliverableRoom.GetDesiredItem(deliverItem, maxMoney, maxNumPick) == null) continue;
 
 					list.add(deliverableRoom);
 				}
@@ -125,7 +125,7 @@ public class MapManager {
 					long travelTime = this.GetTravelTime(moveMethod, room, currentRoom);
 					if (travelTime > maxTravelTime) continue;
 
-					ItemCatalog ic = shopRoom.GetProductItemForConsumeWithNewPrice(maxMoney, maxNumPick);
+					ItemCatalog ic = shopRoom.GetProductItem(maxMoney, maxNumPick);
 					if (ic == null) continue;
 					if (ic.itemDef != desiredItem) continue;
 
@@ -151,7 +151,7 @@ public class MapManager {
 					long travelTime = this.GetTravelTime(moveMethod, room, currentRoom);
 					if (travelTime > maxTravelTime) continue;
 
-					ItemCatalog ic = shopRoom.GetProductItemForConsumeWithNewPrice(maxMoney, maxNumPick);
+					ItemCatalog ic = shopRoom.GetProductItem(maxMoney, maxNumPick);
 					if (ic == null) continue;
 
 					list.add(shopRoom);
@@ -176,7 +176,7 @@ public class MapManager {
 					long travelTime = this.GetTravelTime(moveMethod, room.GetParentBuilding(), currentRoom.GetParentBuilding());
 					if (travelTime > maxTravelTime) continue;
 
-					ItemCatalog ic = shopRoom.GetProductItemForConsumeWithNewPrice(maxMoney, maxNumPick);
+					ItemCatalog ic = shopRoom.GetProductItem(maxMoney, maxNumPick);
 					if (ic == null) continue;
 					if (ic.itemDef instanceof ConsumeDef == false) continue;
 
@@ -202,7 +202,7 @@ public class MapManager {
 					long travelTime = this.GetTravelTime(moveMethod, room.GetParentBuilding(), currentRoom.GetParentBuilding());
 					if (travelTime > maxTravelTime) continue;
 
-					ItemCatalog ic = factoryRoom.GetProductItemForConsumeWithNewPrice(maxMoney, maxNumPick);
+					ItemCatalog ic = factoryRoom.GetProductItem(maxMoney, maxNumPick);
 					if (ic == null) continue;
 					if (ic.itemDef instanceof ConsumeDef == false) continue;
 

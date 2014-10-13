@@ -86,7 +86,7 @@ public class SimulationMain extends Thread {
 					}
 				}
 
-				if (timeNow - timeLast7day >= 60 * 24 * 3) {
+				if (timeNow - timeLast7day >= 60 * 24 * 1) {
 					timeLast7day = timeNow;
 
 					// 建設完了している建物は、建築完了フラグを立てる。

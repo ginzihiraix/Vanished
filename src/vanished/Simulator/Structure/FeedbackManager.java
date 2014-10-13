@@ -52,7 +52,7 @@ public class FeedbackManager {
 		}
 
 		// TODO:スムージングする。
-		{
+		if (false) {
 			int num = ret.length;
 			if (num >= 3) {
 				double[] value = new double[num];
