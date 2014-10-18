@@ -11,76 +11,13 @@ import vanished.Simulator.Item.Item;
 import vanished.Simulator.Item.ItemDef;
 import vanished.Simulator.Item.ItemDefComparator;
 import vanished.Simulator.Skill.Skill;
-import vanished.Simulator.Structure.FactoryRoomDef.FactoryMakerInfo;
-import vanished.Simulator.Structure.FactoryRoomDef.FactoryMaterialInfo;
-import vanished.Simulator.Structure.FactoryRoomDef.FactoryProductInfo;
+import vanished.Simulator.Structure.FactoryProductManager.FactoryMaterialManager;
 
 public class FactoryRoom extends ShopRoom {
 
 	private boolean forBuilding = false;
 
 	private FactoryProductManager factoryProductManager;
-
-	public class FactoryMaterialManager {
-
-		FactoryMaterialInfo factoryMaterialInfo;
-
-		public FactoryMaterialManager(FactoryMaterialInfo materialInfo) {
-			this.factoryMaterialInfo = materialInfo;
-		}
-	}
-
-	public class FactoryMakerManager {
-
-		FactoryMakerInfo factoryMakerInfo;
-
-		// 労働者の賃金
-		// double wage = 1 + OtherUtility.RandGaussian() * 0.1;
-		double wage = 1;
-		double wageRate = 1;
-
-		public FactoryMakerManager(FactoryMakerInfo factoryMakerInfo) {
-			this.factoryMakerInfo = factoryMakerInfo;
-		}
-
-		// ////////////////////////////////////////////////////////
-		// ////////////////////////////////////////////////////////
-		// 統計用
-		// ////////////////////////////////////////////////////////
-		// ////////////////////////////////////////////////////////
-		private FeedbackManager feedbackManager = new FeedbackManager();
-
-		public void ResetStatisticalParameters() {
-			feedbackManager.ResetStatisticalParameters();
-		}
-
-		public void Feedback(double price, double quantity) {
-			feedbackManager.Add(price, quantity);
-		}
-	}
-
-	public class FactoryProductManager {
-		FactoryProductInfo factoryProductInfo;
-
-		// 製品をnumProductPerWork個作るのに必要な材料
-		TreeMap<ItemDef, FactoryMaterialManager> factoryMaterialManager = new TreeMap<ItemDef, FactoryMaterialManager>(new ItemDefComparator());
-
-		// 製造できる人材のリスト
-		FactoryMakerManager factoryMakerManager;
-
-		public FactoryProductManager(FactoryProductInfo factoryProductInfo) {
-			this.factoryProductInfo = factoryProductInfo;
-
-			for (Entry<ItemDef, FactoryMaterialInfo> e : factoryProductInfo.factoryMaterialInfo.entrySet()) {
-				ItemDef materialItemDef = e.getKey();
-				FactoryMaterialInfo materialInfo = e.getValue();
-				FactoryMaterialManager mm = new FactoryMaterialManager(materialInfo);
-				this.factoryMaterialManager.put(materialItemDef, mm);
-			}
-
-			factoryMakerManager = new FactoryMakerManager(this.factoryProductInfo.factoryMakerInfo);
-		}
-	}
 
 	public FactoryRoom(Building building, FactoryRoomDef roomDef, boolean forBuilding) {
 		super(building, roomDef);
@@ -92,21 +29,24 @@ public class FactoryRoom extends ShopRoom {
 		super.DumpStatus(timeNow);
 		System.out.println("===Factory Department===");
 		System.out.println("factory skillname : " + this.factoryProductManager.factoryMakerManager.factoryMakerInfo.skill.GetName());
-		System.out.println("product wage : " + this.factoryProductManager.factoryMakerManager.wage);
+		double wageForFullWork = this.factoryProductManager.factoryMakerManager.GetWage();
+		System.out.println("product wage : " + wageForFullWork);
 	}
 
 	public class CallForMaker {
 		public ItemDef itemDef;
 		public Skill skill;
 		public double wageForFullWork;
+		public int wageIndex;
 		public double numMake;
 		public long duration;
 		public double gain;
 
-		public CallForMaker(ItemDef itemDef, Skill skill, double wageForFullWork, double numMake, long duration, double gain) {
+		public CallForMaker(ItemDef itemDef, Skill skill, double wageForFullWork, int wageIndex, double numMake, long duration, double gain) {
 			this.itemDef = itemDef;
 			this.skill = skill;
 			this.wageForFullWork = wageForFullWork;
+			this.wageIndex = wageIndex;
 			this.numMake = numMake;
 			this.duration = duration;
 			this.gain = gain;
@@ -128,7 +68,8 @@ public class FactoryRoom extends ShopRoom {
 			if (numMakableMin == 0) return null;
 		}
 
-		double wageForFullWork = this.factoryProductManager.factoryMakerManager.wage * this.factoryProductManager.factoryMakerManager.wageRate;
+		double wageForFullWork = this.factoryProductManager.factoryMakerManager.GetWage();
+		int wageIndex = this.factoryProductManager.factoryMakerManager.GetWageIndex();
 
 		long duration = (long) (numMakableMin / this.factoryProductManager.factoryMakerManager.factoryMakerInfo.numProductPerMake * this.factoryProductManager.factoryMakerManager.factoryMakerInfo.durationForMake);
 		if (duration == 0) duration = 1L;
@@ -136,7 +77,7 @@ public class FactoryRoom extends ShopRoom {
 		double gain = wageForFullWork * numMakableMin / this.factoryProductManager.factoryMakerManager.factoryMakerInfo.numProductPerMake;
 
 		CallForMaker cfw = new CallForMaker(this.factoryProductManager.factoryProductInfo.itemDef,
-				this.factoryProductManager.factoryMakerManager.factoryMakerInfo.skill, wageForFullWork, numMakableMin, duration, gain);
+				this.factoryProductManager.factoryMakerManager.factoryMakerInfo.skill, wageForFullWork, wageIndex, numMakableMin, duration, gain);
 		return cfw;
 	}
 
@@ -179,8 +120,8 @@ public class FactoryRoom extends ShopRoom {
 		return cfw;
 	}
 
-	public void SetMakerPriceRate(double rate) {
-		this.factoryProductManager.factoryMakerManager.wageRate = rate;
+	public void SetMakerPriceIndex(int index) {
+		this.factoryProductManager.factoryMakerManager.SetWageIndex(index);
 	}
 
 	public class MakeResult {
@@ -241,9 +182,9 @@ public class FactoryRoom extends ShopRoom {
 	}
 
 	// 商品価格に対してフォードバックを与える。どのくらいの確率で選択されたか、各Humanがフィードバックを与える。
-	public void FeedbackAboutMakerPrice(CallForMaker cfm, double price, double quantity) {
+	public void FeedbackAboutMakerPrice(CallForMaker cfm, int priceIndex, double quantity) {
 		// System.out.println("FeedbackAboutMakerPrice : " + this.roomDef.name + ", " + price + ", " + quantity);
-		this.factoryProductManager.factoryMakerManager.Feedback(price, quantity);
+		this.factoryProductManager.factoryMakerManager.Feedback(priceIndex, quantity);
 	}
 
 	// ////////////////////////////////////////////////////////
@@ -273,20 +214,6 @@ public class FactoryRoom extends ShopRoom {
 	public void ManagePriceSet(MapManager mm, HumanManager hm, long timeNow) throws Exception {
 		if (timeNow - this.timeLastManagePrice < 60 * 24) return;
 
-		// 数量が0になるような料金を追加しておく。
-		if (false) {
-			this.FeedbackAboutProductPrice(this.shopStockManager.GetPriceWithRate() * 100, 0);
-
-			CallForMaker cfm = this.GetDesiredMaker(Double.MAX_VALUE);
-			this.FeedbackAboutMakerPrice(cfm, this.factoryProductManager.factoryMakerManager.wage / 100, 0);
-
-			for (Entry<ItemDef, FactoryMaterialManager> e2 : this.factoryProductManager.factoryMaterialManager.entrySet()) {
-				ItemDef materialItemDef = e2.getKey();
-				StockManager msm = this.deliverStockManager.get(materialItemDef);
-				this.FeedbackAboutDeliverPrice(materialItemDef, msm.GetPriceWithRate() / 100, 0);
-			}
-		}
-
 		long duration = timeNow - this.timeLastManagePrice;
 		this.timeLastManagePrice = timeNow;
 
@@ -298,8 +225,9 @@ public class FactoryRoom extends ShopRoom {
 			durationFutureTarget = 60L * 24L * 10L;
 		}
 
-		double productNumStock = this.shopStockManager.GetNumStock();
 		{
+			double productNumStock = this.shopStockManager.GetNumStock();
+
 			class Pack {
 				FeedbackLog productFeedback = null;
 				FeedbackLog makerFeedback = null;
@@ -322,19 +250,18 @@ public class FactoryRoom extends ShopRoom {
 			FeedbackLog[] productFeedbackList = this.shopStockManager.feedbackManager.CollectResultWithEqualImpressionAdjust();
 			for (FeedbackLog productFeedback : productFeedbackList) {
 
-				double salesAccount = productFeedback.quantityTotal / duration * durationFutureTarget * productFeedback.price;
+				double salesAccount = productFeedback.quantityTotal / duration * durationFutureTarget * productFeedback.priceIndex;
 
 				// 販売量に見合うだけの労働者を確保するための価格設定を探す。
 				FeedbackLog makerFeedbackBest = null;
 				double makerCostBest = Double.MAX_VALUE;
 				{
-					FeedbackLog[] makerFeedbackList = this.factoryProductManager.factoryMakerManager.feedbackManager
-							.CollectResultWithEqualImpressionAdjust();
+					FeedbackLog[] makerFeedbackList = this.factoryProductManager.factoryMakerManager.CollectResultWithEqualImpressionAdjust();
 
 					double priceMax = 0;
 					for (FeedbackLog makerFeedback : makerFeedbackList) {
-						if (makerFeedback.price > priceMax) {
-							priceMax = makerFeedback.price;
+						if (makerFeedback.priceIndex > priceMax) {
+							priceMax = makerFeedback.priceIndex;
 						}
 					}
 
@@ -344,7 +271,7 @@ public class FactoryRoom extends ShopRoom {
 						double productSub = productFeedback.quantityTotal / duration * durationFutureTarget;
 
 						double cost = productAdd / this.factoryProductManager.factoryMakerManager.factoryMakerInfo.numProductPerMake
-								* makerFeedback.price;
+								* makerFeedback.priceIndex;
 
 						double costExt = 0;
 						double res = productAdd + productNumStock - productSub;
@@ -380,8 +307,8 @@ public class FactoryRoom extends ShopRoom {
 
 						double priceMax = 0;
 						for (FeedbackLog materialFeedback : materialFeedbackList) {
-							if (materialFeedback.price > priceMax) {
-								priceMax = materialFeedback.price;
+							if (materialFeedback.priceIndex > priceMax) {
+								priceMax = materialFeedback.priceIndex;
 							}
 						}
 
@@ -390,7 +317,7 @@ public class FactoryRoom extends ShopRoom {
 							double materialAdd = materialFeedback.quantityTotal / duration * durationFutureTarget;
 							double materialSub = productFeedback.quantityTotal * fmm.factoryMaterialInfo.amount / duration * durationFutureTarget;
 
-							double cost = materialAdd * materialFeedback.price;
+							double cost = materialAdd * materialFeedback.priceIndex;
 
 							double costExt = 0;
 							double res = materialAdd + materialNumStock - materialSub;
@@ -427,25 +354,14 @@ public class FactoryRoom extends ShopRoom {
 					}
 				}
 
+				// TODO: 出力してみる。
 				if (false) {
-					for (Pack pack : packs) {
-						String flag = "";
-						if (pack == packMax) {
-							flag = "<-selected";
-						}
-						String line = String.format("%f, %f %s", pack.productFeedback.quantityTotal / duration * durationFutureTarget,
-								pack.makerFeedback.quantityTotal / duration * durationFutureTarget, flag);
-						System.out.println(line);
-					}
-				}
-
-				if (true) {
 					for (Pack pack : packs) {
 
 						FeedbackLog productFeedback = pack.productFeedback;
 						FeedbackLog makerFeedback = pack.makerFeedback;
 
-						double gain = productFeedback.quantityTotal / duration * durationFutureTarget * productFeedback.price;
+						double gain = productFeedback.quantityTotal / duration * durationFutureTarget * productFeedback.priceIndex;
 
 						System.out.println("================================");
 						if (pack == packMax) {
@@ -455,7 +371,7 @@ public class FactoryRoom extends ShopRoom {
 						System.out.println("利益 : " + pack.profit);
 
 						System.out.println("売り上げ : " + gain);
-						System.out.println(productFeedback.price + ", " + productFeedback.quantityTotal / duration * durationFutureTarget);
+						System.out.println(productFeedback.priceIndex + ", " + productFeedback.quantityTotal / duration * durationFutureTarget);
 
 						// 販売量に見合うだけの労働者を確保するための価格設定を探す。
 						{
@@ -463,18 +379,18 @@ public class FactoryRoom extends ShopRoom {
 							double productSub = productFeedback.quantityTotal / duration * durationFutureTarget;
 
 							double cost = productAdd / this.factoryProductManager.factoryMakerManager.factoryMakerInfo.numProductPerMake
-									* makerFeedback.price;
+									* makerFeedback.priceIndex;
 
 							double costExt = 0;
 							double res = productAdd + productNumStock - productSub;
 							if (res < 0) {
 								costExt = -res / this.factoryProductManager.factoryMakerManager.factoryMakerInfo.numProductPerMake
-										* this.factoryProductManager.factoryMakerManager.wage * 10;
+										* this.factoryProductManager.factoryMakerManager.GetWage() * 10;
 							}
 
 							double costTotal = cost + costExt;
 
-							System.out.println(makerFeedback.price + ", " + makerFeedback.quantityTotal / duration * durationFutureTarget);
+							System.out.println(makerFeedback.priceIndex + ", " + makerFeedback.quantityTotal / duration * durationFutureTarget);
 							System.out.println("costTotal : " + costTotal + " = " + cost + " + " + costExt);
 						}
 
@@ -493,7 +409,7 @@ public class FactoryRoom extends ShopRoom {
 								double materialAdd = materialFeedback.quantityTotal / duration * durationFutureTarget;
 								double materialSub = productFeedback.quantityTotal * fmm.factoryMaterialInfo.amount / duration * durationFutureTarget;
 
-								double cost = materialAdd * materialFeedback.price;
+								double cost = materialAdd * materialFeedback.priceIndex;
 
 								double costExt = 0;
 								double res = materialAdd + materialNumStock - materialSub;
@@ -503,8 +419,8 @@ public class FactoryRoom extends ShopRoom {
 
 								double costTotal = cost + costExt;
 
-								System.out.println(materialFeedback.price + ", " + materialFeedback.quantityTotal / fmm.factoryMaterialInfo.amount
-										/ duration * durationFutureTarget);
+								System.out.println(materialFeedback.priceIndex + ", " + materialFeedback.quantityTotal
+										/ fmm.factoryMaterialInfo.amount / duration * durationFutureTarget);
 								System.out.println("material " + materialItemDef.GetName() + " costTotal : " + costTotal + " = " + cost + " + "
 										+ costExt);
 							}
@@ -515,18 +431,18 @@ public class FactoryRoom extends ShopRoom {
 				// 最適な価格に設定する。
 				{
 					{
-						this.shopStockManager.SetPrice(packMax.productFeedback.price);
+						this.shopStockManager.SetPrice(packMax.productFeedback.priceIndex);
 					}
 
 					{
-						this.factoryProductManager.factoryMakerManager.wage = packMax.makerFeedback.price;
+						this.factoryProductManager.factoryMakerManager.SetWageIndex(packMax.makerFeedback.priceIndex);
 					}
 
 					for (Entry<ItemDef, StockManager> e : deliverStockManager.entrySet()) {
 						ItemDef itemDef = e.getKey();
 						StockManager msm = e.getValue();
 						FeedbackLog feedbackMaterial = packMax.materialFeedback.get(itemDef);
-						msm.SetPrice(feedbackMaterial.price);
+						msm.SetPrice(feedbackMaterial.priceIndex);
 					}
 				}
 			}
@@ -541,10 +457,10 @@ public class FactoryRoom extends ShopRoom {
 				// TODO
 				for (FeedbackLog feedback : feedbackList) {
 					String flag = "";
-					if (feedback.price == this.shopStockManager.GetPriceWithRate()) {
+					if (feedback.priceIndex == this.shopStockManager.GetPriceWithRate()) {
 						flag = " <-BEST";
 					}
-					System.out.println(feedback.price + "円, " + feedback.impressionTotal + "回, " + feedback.quantityTotal / duration
+					System.out.println(feedback.priceIndex + "円, " + feedback.impressionTotal + "回, " + feedback.quantityTotal / duration
 							* durationFutureTarget + "個" + flag);
 				}
 				shopStockManager.ResetStatisticalParameters();
@@ -562,10 +478,10 @@ public class FactoryRoom extends ShopRoom {
 				// TODO
 				for (FeedbackLog feedback : feedbackList) {
 					String flag = "";
-					if (feedback.price == msm.GetPriceWithRate()) {
+					if (feedback.priceIndex == msm.GetPriceWithRate()) {
 						flag = " <-BEST";
 					}
-					System.out.println(feedback.price + "円, " + feedback.impressionTotal + "回, " + feedback.quantityTotal
+					System.out.println(feedback.priceIndex + "円, " + feedback.impressionTotal + "回, " + feedback.quantityTotal
 							/ fmm.factoryMaterialInfo.amount / duration * durationFutureTarget + "個" + flag);
 				}
 				msm.ResetStatisticalParameters();
@@ -575,21 +491,21 @@ public class FactoryRoom extends ShopRoom {
 			System.out.println("$                      ManageMakerWage                        $");
 			System.out.println("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$");
 			{
-				FeedbackLog[] feedbackList = this.factoryProductManager.factoryMakerManager.feedbackManager.CollectResultWithEqualImpressionAdjust();
+				FeedbackLog[] feedbackList = this.factoryProductManager.factoryMakerManager.CollectResultWithEqualImpressionAdjust();
 				// TODO
 				for (FeedbackLog feedback : feedbackList) {
 					String flag = "";
-					if (feedback.price == this.factoryProductManager.factoryMakerManager.wage) {
+					if (feedback.priceIndex == this.factoryProductManager.factoryMakerManager.GetWage()) {
 						flag = " <-BEST";
 					}
-					System.out.println(feedback.price + "円, " + feedback.impressionTotal + "回, " + feedback.quantityTotal / duration
+					System.out.println(feedback.priceIndex + "円, " + feedback.impressionTotal + "回, " + feedback.quantityTotal / duration
 							* durationFutureTarget + "個" + flag);
 				}
 				this.factoryProductManager.factoryMakerManager.ResetStatisticalParameters();
 			}
 		}
 	}
-	
+
 	// /////////////////////////////////////////////////////////////////////
 	// /////////////////////////////////////////////////////////////////////
 	// Obsolete

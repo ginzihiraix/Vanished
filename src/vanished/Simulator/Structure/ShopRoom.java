@@ -44,20 +44,25 @@ public class ShopRoom extends DeliverRoom {
 	public class ItemCatalog {
 		public ItemDef itemDef;
 		public double price;
+		public int priceIndex;
 		public double numPick;
 		public long durationToBuy;
 
-		public ItemCatalog(ItemDef itemDef, double price, double numConsume, long duration) {
+		public ItemCatalog(ItemDef itemDef, double price, int priceIndex, double numConsume, long duration) {
 			this.itemDef = itemDef;
 			this.price = price;
+			this.priceIndex = priceIndex;
 			this.numPick = numConsume;
 			this.durationToBuy = duration;
 		}
 	}
 
 	// 販売商品の一覧を取得する。
-	private ItemCatalog GetProductItem(double maxMoney, double maxNumPick, double price) {
+	public ItemCatalog GetProductItem(double maxMoney, double maxNumPick) {
 		ShopRoomDef shopRoomDef = (ShopRoomDef) roomDef;
+
+		double price = this.shopStockManager.GetPriceWithRate();
+		int priceIndex = this.shopStockManager.GetPriceIndex();
 
 		// 個数を決める。
 		double minNumPick = Double.MAX_VALUE;
@@ -78,18 +83,12 @@ public class ShopRoom extends DeliverRoom {
 		// long duration = (long) (shopRoomDef.durationToSell * minNumPick) + 1;
 		long duration = shopRoomDef.durationToSell;
 
-		ItemCatalog itemCatalog = new ItemCatalog(this.shopStockManager.stockManagerInfo.itemDef, price, minNumPick, duration);
+		ItemCatalog itemCatalog = new ItemCatalog(this.shopStockManager.stockManagerInfo.itemDef, price, priceIndex, minNumPick, duration);
 		return itemCatalog;
 	}
 
-	public ItemCatalog GetProductItem(double maxMoney, double maxNumPick) {
-		// 価格を決める。
-		double price = this.shopStockManager.GetPriceWithRate();
-		return this.GetProductItem(maxMoney, maxNumPick, price);
-	}
-
-	public void SetProductPriceRate(double rate) {
-		this.shopStockManager.SetPriceRate(rate);
+	public void SetProductPriceIndex(int priceIndex) {
+		this.shopStockManager.SetPriceWithIndex(priceIndex);
 	}
 
 	// 商品を買う
@@ -113,9 +112,9 @@ public class ShopRoom extends DeliverRoom {
 	}
 
 	// 商品価格に対してフォードバックを与える。いくらだったらNo1の選択肢になったのか、各Humanがフィードバックを与える。
-	public void FeedbackAboutProductPrice(double price, double quantity) {
+	public void FeedbackAboutProductPrice(int priceIndex, double quantity) {
 		// System.out.println("FeedbackAboutProductPrice : " + this.roomDef.name + ", " + price + ", " + quantity);
-		this.shopStockManager.Feedback(price, quantity);
+		this.shopStockManager.Feedback(priceIndex, quantity);
 	}
 
 	// ////////////////////////////////////////////////////////

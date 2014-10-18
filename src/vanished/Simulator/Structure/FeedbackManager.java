@@ -5,17 +5,17 @@ import java.util.TreeMap;
 
 public class FeedbackManager {
 
-	private TreeMap<Double, FeedbackLog> logs = new TreeMap<Double, FeedbackLog>();
+	private TreeMap<Integer, FeedbackLog> logs = new TreeMap<Integer, FeedbackLog>();
 
 	public void ResetStatisticalParameters() {
 		logs.clear();
 	}
 
-	public void Add(double price, double quantity) {
-		FeedbackLog log = logs.get(price);
+	public void Add(int priceIndex, double price, double quantity) {
+		FeedbackLog log = logs.get(priceIndex);
 		if (log == null) {
-			log = new FeedbackLog(price);
-			logs.put(price, log);
+			log = new FeedbackLog(priceIndex, price);
+			logs.put(priceIndex, log);
 		}
 		log.impressionTotal += 1;
 		log.quantityTotal += quantity;
@@ -27,9 +27,9 @@ public class FeedbackManager {
 		FeedbackLog[] ret = new FeedbackLog[num];
 		{
 			int index = 0;
-			for (Entry<Double, FeedbackLog> e : logs.entrySet()) {
+			for (Entry<Integer, FeedbackLog> e : logs.entrySet()) {
 				FeedbackLog log = e.getValue();
-				ret[index] = new FeedbackLog(log.price, log.impressionTotal, log.quantityTotal);
+				ret[index] = new FeedbackLog(log.priceIndex, log.price, log.impressionTotal, log.quantityTotal);
 				index++;
 			}
 		}

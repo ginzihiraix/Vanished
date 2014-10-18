@@ -1,16 +1,16 @@
 package vanished.Simulator.Structure;
 
 public class FeedbackLog {
-	public double price;
+	public int priceIndex;
 	public double impressionTotal;
 	public double quantityTotal;
 
-	public FeedbackLog(double price) {
-		this.price = price;
+	public FeedbackLog(int priceIndex) {
+		this.priceIndex = priceIndex;
 	}
 
-	public FeedbackLog(double price, double impressionTotal, double quantityTotal) {
-		this.price = price;
+	public FeedbackLog(int priceIndex, double impressionTotal, double quantityTotal) {
+		this.priceIndex = priceIndex;
 		this.impressionTotal = impressionTotal;
 		this.quantityTotal = quantityTotal;
 	}

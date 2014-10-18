@@ -10,27 +10,30 @@ public class StockManager {
 
 	StockManagerInfo stockManagerInfo;
 
-	private double price;
-	private double priceRate = 1;
+	private int priceIndex = 0;
+	private double priceStepSize = 1.01;
 
 	private double numStock;
 
 	public StockManager(ItemDef itemDef, StockManagerInfo stockManagerInfo) {
 		this.itemDef = itemDef;
 		this.stockManagerInfo = stockManagerInfo;
-		price = 1;
 	}
 
 	public double GetPriceWithRate() {
-		return price * priceRate;
+		return Math.pow(priceStepSize, priceIndex);
+	}
+
+	public int GetPriceIndex() {
+		return priceIndex;
+	}
+
+	public void SetPriceWithIndex(int priceIndex) {
+		this.priceIndex = priceIndex;
 	}
 
 	public void SetPrice(double price) {
-		this.price = price;
-	}
-
-	public void SetPriceRate(double priceRate) {
-		this.priceRate = priceRate;
+		this.priceIndex = (int) (Math.log(price) / Math.log(priceStepSize) + 0.5);
 	}
 
 	public double GetNumStock() {
@@ -87,8 +90,8 @@ public class StockManager {
 
 	public FeedbackManager feedbackManager = new FeedbackManager();
 
-	public void Feedback(double price, double quantity) {
-		feedbackManager.Add(price, quantity);
+	public void Feedback(int priceIndex, double quantity) {
+		feedbackManager.Add(priceIndex, quantity);
 	}
 
 	public void ResetStatisticalParameters() {

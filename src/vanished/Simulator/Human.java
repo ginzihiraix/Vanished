@@ -78,7 +78,7 @@ public class Human {
 		// 実行する。
 		this.BBB(resultsReal, resultsVirtual);
 
-		// 情況をダンプ
+		// 状況をダンプ
 		this.humanStatus.Dump();
 	}
 
@@ -124,13 +124,13 @@ public class Human {
 			}
 		}
 
-		// 登場するアイテムを列挙し、アイテムごとに、Min、Maxを計算しておく。
-		HashMap<ItemDef, double[]> productItemPriceMap = new HashMap<ItemDef, double[]>();
-		HashMap<ItemDef, double[]> materialItemPriceMap = new HashMap<ItemDef, double[]>();
-		double[] makerPriceMap = new double[2];
+		// 登場するアイテムを列挙し、アイテムごとに、価格のMin、Maxを計算しておく。
+		HashMap<ItemDef, int[]> productItemPriceMap = new HashMap<ItemDef, int[]>();
+		HashMap<ItemDef, int[]> materialItemPriceMap = new HashMap<ItemDef, int[]>();
+		int[] makerPriceMap = new int[2];
 		{
-			makerPriceMap[0] = Double.MAX_VALUE;
-			makerPriceMap[1] = -Double.MAX_VALUE;
+			makerPriceMap[0] = Integer.MAX_VALUE;
+			makerPriceMap[1] = -Integer.MAX_VALUE;
 
 			for (ArrayList<Action> resultSequence : resultsReal) {
 				Room roomVirtual = null;
@@ -140,35 +140,35 @@ public class Human {
 
 						{
 							CallForItem cfi = result.deliverRoom.GetDesiredItem(result.itemDef, Double.MAX_VALUE, Double.MAX_VALUE);
-							double[] priceset = materialItemPriceMap.get(cfi.itemDef);
+							int[] priceset = materialItemPriceMap.get(cfi.itemDef);
 							if (priceset == null) {
-								priceset = new double[2];
-								priceset[0] = Double.MAX_VALUE;
-								priceset[1] = -Double.MAX_VALUE;
+								priceset = new int[2];
+								priceset[0] = Integer.MAX_VALUE;
+								priceset[1] = -Integer.MAX_VALUE;
 								materialItemPriceMap.put(result.itemDef, priceset);
 							}
 							if (cfi.price < priceset[0]) {
-								priceset[0] = cfi.price;
+								priceset[0] = cfi.priceIndex;
 							}
 							if (cfi.price > priceset[1]) {
-								priceset[1] = cfi.price;
+								priceset[1] = cfi.priceIndex;
 							}
 						}
 
 						{
 							ItemCatalog ic = result.shopRoom.GetProductItem(Double.MAX_VALUE, Double.MAX_VALUE);
-							double[] priceset = productItemPriceMap.get(result.itemDef);
+							int[] priceset = productItemPriceMap.get(result.itemDef);
 							if (priceset == null) {
-								priceset = new double[2];
-								priceset[0] = Double.MAX_VALUE;
-								priceset[1] = -Double.MAX_VALUE;
+								priceset = new int[2];
+								priceset[0] = Integer.MAX_VALUE;
+								priceset[1] = -Integer.MAX_VALUE;
 								productItemPriceMap.put(result.itemDef, priceset);
 							}
 							if (ic.price < priceset[0]) {
-								priceset[0] = ic.price;
+								priceset[0] = ic.priceIndex;
 							}
 							if (ic.price > priceset[1]) {
-								priceset[1] = ic.price;
+								priceset[1] = ic.priceIndex;
 							}
 						}
 
@@ -177,10 +177,10 @@ public class Human {
 
 						CallForMaker cfm = result.factoryRoom.GetDesiredMaker(Double.MAX_VALUE);
 						if (cfm.wageForFullWork < makerPriceMap[0]) {
-							makerPriceMap[0] = cfm.wageForFullWork;
+							makerPriceMap[0] = cfm.wageIndex;
 						}
 						if (cfm.wageForFullWork > makerPriceMap[1]) {
-							makerPriceMap[1] = cfm.wageForFullWork;
+							makerPriceMap[1] = cfm.wageIndex;
 						}
 
 					} else if (res instanceof ConsumerAction) {
@@ -188,18 +188,18 @@ public class Human {
 
 						{
 							ItemCatalog ic = result.shopRoom.GetProductItem(Double.MAX_VALUE, Double.MAX_VALUE);
-							double[] priceset = productItemPriceMap.get(result.itemDef);
+							int[] priceset = productItemPriceMap.get(result.itemDef);
 							if (priceset == null) {
-								priceset = new double[2];
-								priceset[0] = Double.MAX_VALUE;
-								priceset[1] = -Double.MAX_VALUE;
+								priceset = new int[2];
+								priceset[0] = Integer.MAX_VALUE;
+								priceset[1] = -Integer.MAX_VALUE;
 								productItemPriceMap.put(result.itemDef, priceset);
 							}
 							if (ic.price < priceset[0]) {
-								priceset[0] = ic.price;
+								priceset[0] = ic.priceIndex;
 							}
 							if (ic.price > priceset[1]) {
-								priceset[1] = ic.price;
+								priceset[1] = ic.priceIndex;
 							}
 						}
 
@@ -241,7 +241,7 @@ public class Human {
 	}
 
 	private void EvaluateAndFeedbackAction(ArrayList<ArrayList<Action>> actionSequenceList, Room roomVirtual,
-			HashMap<ItemDef, double[]> productItemPriceMap, HashMap<ItemDef, double[]> materialItemPriceMap, double[] makerPriceMap) throws Exception {
+			HashMap<ItemDef, int[]> productItemPriceMap, HashMap<ItemDef, int[]> materialItemPriceMap, int[] makerPriceMap) throws Exception {
 
 		// Actionに登場する部屋一覧を作る。
 		HashMap<Room, Boolean> roomPriceTestMap = new HashMap<Room, Boolean>();
@@ -269,100 +269,64 @@ public class Human {
 
 		// 部屋毎に、商品販売価格、材料買取価格、製造賃金価格、を動かして、各アクションの選択確率を計算する。
 		{
-			double stepSize = 1.05;
-
 			for (Room roomPriceTest : roomPriceTestMap.keySet()) {
 
 				// 労働者の賃金を動かして、Feedbackする。
 				if (roomPriceTest instanceof FactoryRoom) {
 					FactoryRoom factoryRoomPriceTest = (FactoryRoom) roomPriceTest;
-					double wage = factoryRoomPriceTest.GetDesiredMaker(Double.MAX_VALUE).wageForFullWork;
 
-					int indexMin = -10;
-					int indexMax = +10;
-					if (false) {
-						double priceMin = makerPriceMap[0];
-						double priceMax = makerPriceMap[1];
-						if (false) {
-							for (Room roomPriceTest2 : roomPriceTestMap.keySet()) {
-								FactoryRoom factoryRoomPriceTest2 = (FactoryRoom) roomPriceTest2;
-								double wage2 = factoryRoomPriceTest2.GetDesiredMaker(Double.MAX_VALUE).wageForFullWork;
-								if (wage2 > priceMax) priceMax = wage2;
-								if (wage2 < priceMin) priceMin = wage2;
-							}
-						}
-						int indexMax2 = (int) (Math.log(priceMax / wage * 1.5) / Math.log(stepSize));
-						int indexMin2 = (int) (Math.log(priceMin / wage / 1.5) / Math.log(stepSize));
+					CallForMaker cfmOrg = factoryRoomPriceTest.GetDesiredMaker(Double.MAX_VALUE);
+
+					int indexMin = cfmOrg.wageIndex - 10;
+					int indexMax = cfmOrg.wageIndex + 10;
+					if (true) {
+						int indexMax2 = makerPriceMap[0];
+						int indexMin2 = makerPriceMap[1];
 						if (indexMax2 > indexMax) indexMax = indexMax2;
 						if (indexMin2 < indexMin) indexMin = indexMin2;
 					}
 
-					for (int index = indexMin; index <= indexMax; index++) {
-						double priceRate = Math.pow(stepSize, index);
-						factoryRoomPriceTest.SetMakerPriceRate(priceRate);
-						CallForMaker cfm = factoryRoomPriceTest.GetDesiredMaker(Double.MAX_VALUE);
-						factoryRoomPriceTest.FeedbackAboutMakerPrice(cfm, cfm.wageForFullWork, 0);
+					for (int priceIndex = indexMin; priceIndex <= indexMax; priceIndex++) {
+						factoryRoomPriceTest.FeedbackAboutMakerPrice(cfmOrg, priceIndex, 0);
 					}
 
-					for (int index = indexMin; index <= indexMax; index++) {
-						double priceRate = Math.pow(stepSize, index);
-						factoryRoomPriceTest.SetMakerPriceRate(priceRate);
+					for (int priceIndex = indexMin; priceIndex <= indexMax; priceIndex++) {
+						factoryRoomPriceTest.SetMakerPriceIndex(priceIndex);
 						this.Feedback(actionSequenceList, 2, roomPriceTest);
 					}
-					factoryRoomPriceTest.SetMakerPriceRate(1);
+					factoryRoomPriceTest.SetMakerPriceIndex(cfmOrg.wageIndex);
 				}
 
 				// 商品価格を動かして、Feedbackする。
 				if (roomPriceTest instanceof ShopRoom) {
 
 					ShopRoom shopRoomPriceTest = (ShopRoom) roomPriceTest;
+					ItemCatalog icOrg = shopRoomPriceTest.GetProductItem(Double.MAX_VALUE, Double.MAX_VALUE);
 
-					ItemDef itemDef = shopRoomPriceTest.GetProductItemDef();
-					double price = shopRoomPriceTest.GetProductItemPrice();
-
-					int indexMin = -10;
-					int indexMax = 10;
-					if (false) {
-						double priceMax = 0;
-						double priceMin = Double.MAX_VALUE;
+					int indexMin = icOrg.priceIndex - 10;
+					int indexMax = icOrg.priceIndex + 10;
+					if (true) {
+						int indexMax2;
+						int indexMin2;
 						{
-							// double[] priceset = materialItemPriceMap.get(itemDef);
-							// priceMin = priceset[0];
-							// priceMax = priceset[1];
-							double[] productPriceset = productItemPriceMap.get(itemDef);
-							double[] materialPriceset = materialItemPriceMap.get(itemDef);
-							priceMin = productPriceset[0] < materialPriceset[0] ? productPriceset[0] : materialPriceset[0];
-							priceMax = productPriceset[1] > materialPriceset[1] ? productPriceset[1] : materialPriceset[1];
+							int[] productPriceset = productItemPriceMap.get(icOrg.itemDef);
+							int[] materialPriceset = materialItemPriceMap.get(icOrg.itemDef);
+							indexMin2 = productPriceset[0] < materialPriceset[0] ? productPriceset[0] : materialPriceset[0];
+							indexMax2 = productPriceset[1] > materialPriceset[1] ? productPriceset[1] : materialPriceset[1];
 						}
-						if (false) {
-							for (Room roomPriceTest2 : roomPriceTestMap.keySet()) {
-								DeliverRoom deliverRoomPriceTest2 = (DeliverRoom) roomPriceTest2;
-								CallForItem cfi2 = deliverRoomPriceTest2.GetDesiredItem(itemDef, Double.MAX_VALUE, Double.MAX_VALUE);
-								if (cfi2 == null) continue;
-								double price2 = cfi2.price;
-								if (price2 > priceMax) priceMax = price2;
-								if (price2 < priceMin) priceMin = price2;
-							}
-						}
-						int indexMax2 = (int) (Math.log(priceMax / price * 1.5) / Math.log(stepSize));
-						int indexMin2 = (int) (Math.log(priceMin / price / 1.5) / Math.log(stepSize));
 						if (indexMax2 > indexMax) indexMax = indexMax2;
 						if (indexMin2 < indexMin) indexMin = indexMin2;
 					}
 
-					for (int index = indexMin; index <= indexMax; index++) {
-						double priceRate = Math.pow(stepSize, index);
-						shopRoomPriceTest.SetProductPriceRate(priceRate);
-						ItemCatalog ic = shopRoomPriceTest.GetProductItem(Double.MAX_VALUE, Double.MAX_VALUE);
-						shopRoomPriceTest.FeedbackAboutProductPrice(ic.price, 0);
+					for (int priceIndex = indexMin; priceIndex <= indexMax; priceIndex++) {
+						shopRoomPriceTest.FeedbackAboutProductPrice(priceIndex, 0);
 					}
 
-					for (int index = indexMin; index <= indexMax; index++) {
-						double priceRate = Math.pow(stepSize, index);
-						shopRoomPriceTest.SetProductPriceRate(priceRate);
+					for (int priceIndex = indexMin; priceIndex <= indexMax; priceIndex++) {
+						shopRoomPriceTest.SetProductPriceIndex(priceIndex);
 						this.Feedback(actionSequenceList, 1, roomPriceTest);
 					}
-					shopRoomPriceTest.SetProductPriceRate(1);
+					shopRoomPriceTest.SetProductPriceIndex(icOrg.priceIndex);
 				}
 
 				// 材料の買い取り価格を動かして、Feedbackする。
@@ -370,51 +334,32 @@ public class Human {
 
 					DeliverRoom deliverRoomPriceTest = (DeliverRoom) roomPriceTest;
 					ArrayList<CallForItem> list = deliverRoomPriceTest.GetDesiredItemList(Double.MAX_VALUE, Double.MAX_VALUE);
-					for (CallForItem cfi : list) {
+					for (CallForItem cfiOrg : list) {
 
-						ItemDef itemDef = cfi.itemDef;
-						double price = cfi.price;
-
-						int indexMin = -10;
-						int indexMax = 10;
-						if (false) {
-							double priceMax = 0;
-							double priceMin = Double.MAX_VALUE;
+						int indexMin = cfiOrg.priceIndex - 10;
+						int indexMax = cfiOrg.priceIndex + 10;
+						if (true) {
+							int indexMax2;
+							int indexMin2;
 							{
-								double[] productPriceset = productItemPriceMap.get(itemDef);
-								double[] materialPriceset = materialItemPriceMap.get(itemDef);
-								priceMin = productPriceset[0] < materialPriceset[0] ? productPriceset[0] : materialPriceset[0];
-								priceMax = productPriceset[1] > materialPriceset[1] ? productPriceset[1] : materialPriceset[1];
+								int[] productPriceset = productItemPriceMap.get(cfiOrg.itemDef);
+								int[] materialPriceset = materialItemPriceMap.get(cfiOrg.itemDef);
+								indexMin2 = productPriceset[0] < materialPriceset[0] ? productPriceset[0] : materialPriceset[0];
+								indexMax2 = productPriceset[1] > materialPriceset[1] ? productPriceset[1] : materialPriceset[1];
 							}
-							if (false) {
-								for (Room roomPriceTest2 : roomPriceTestMap.keySet()) {
-									ShopRoom shopRoomPriceTest2 = (ShopRoom) roomPriceTest2;
-									ItemDef itemDef2 = shopRoomPriceTest2.GetProductItemDef();
-									if (itemDef != itemDef2) continue;
-									double price2 = shopRoomPriceTest2.GetProductItemPrice();
-									if (price2 > priceMax) priceMax = price2;
-									if (price2 < priceMin) priceMin = price2;
-								}
-							}
-							int indexMax2 = (int) (Math.log(priceMax / price * 1.5) / Math.log(stepSize));
-							int indexMin2 = (int) (Math.log(priceMin / price / 1.5) / Math.log(stepSize));
 							if (indexMax2 > indexMax) indexMax = indexMax2;
 							if (indexMin2 < indexMin) indexMin = indexMin2;
 						}
 
-						for (int index = indexMin; index <= indexMax; index++) {
-							double priceRate = Math.pow(stepSize, index);
-							deliverRoomPriceTest.SetMaterialPriceRate(itemDef, priceRate);
-							CallForItem cfi2 = deliverRoomPriceTest.GetDesiredItem(itemDef, Double.MAX_VALUE, Double.MAX_VALUE);
-							deliverRoomPriceTest.FeedbackAboutDeliverPrice(itemDef, cfi2.price, 0);
+						for (int priceIndex = indexMin; priceIndex <= indexMax; priceIndex++) {
+							deliverRoomPriceTest.FeedbackAboutDeliverPrice(cfiOrg.itemDef, priceIndex, 0);
 						}
 
-						for (int index = indexMin; index <= indexMax; index++) {
-							double priceRate = Math.pow(stepSize, index);
-							deliverRoomPriceTest.SetMaterialPriceRate(cfi.itemDef, priceRate);
+						for (int priceIndex = indexMin; priceIndex <= indexMax; priceIndex++) {
+							deliverRoomPriceTest.SetMaterialPriceIndex(cfiOrg.itemDef, priceIndex);
 							this.Feedback(actionSequenceList, 0, roomPriceTest);
 						}
-						deliverRoomPriceTest.SetMaterialPriceRate(cfi.itemDef, 1);
+						deliverRoomPriceTest.SetMaterialPriceIndex(cfiOrg.itemDef, cfiOrg.priceIndex);
 					}
 				}
 			}
@@ -436,23 +381,23 @@ public class Human {
 				if (res instanceof TraderExecuteResult) {
 					TraderExecuteResult result = (TraderExecuteResult) res;
 					if (roomPriceTest == result.action.shopRoom && feedBackTarget == 1) {
-						result.action.shopRoom.FeedbackAboutProductPrice(result.itemCatalog.price, result.itemCatalog.numPick * p);
+						result.action.shopRoom.FeedbackAboutProductPrice(result.itemCatalog.priceIndex, result.itemCatalog.numPick * p);
 					}
 
 					if (roomPriceTest == result.action.deliverRoom && feedBackTarget == 0) {
-						result.action.deliverRoom.FeedbackAboutDeliverPrice(result.callForItem.itemDef, result.callForItem.price,
+						result.action.deliverRoom.FeedbackAboutDeliverPrice(result.callForItem.itemDef, result.callForItem.priceIndex,
 								result.callForItem.numPick * p);
 					}
 				} else if (res instanceof MakerExecuteResult) {
 					MakerExecuteResult result = (MakerExecuteResult) res;
 					if (roomPriceTest == result.action.factoryRoom && feedBackTarget == 2) {
-						result.action.factoryRoom.FeedbackAboutMakerPrice(result.caalForMaker, result.caalForMaker.wageForFullWork,
+						result.action.factoryRoom.FeedbackAboutMakerPrice(result.caalForMaker, result.caalForMaker.wageIndex,
 								result.caalForMaker.numMake * p);
 					}
 				} else if (res instanceof ConsumerExecuteResult) {
 					ConsumerExecuteResult result = (ConsumerExecuteResult) res;
 					if (roomPriceTest == result.action.shopRoom && feedBackTarget == 1) {
-						result.action.shopRoom.FeedbackAboutProductPrice(result.itemCatalog.price, result.itemCatalog.numPick * p);
+						result.action.shopRoom.FeedbackAboutProductPrice(result.itemCatalog.priceIndex, result.itemCatalog.numPick * p);
 					}
 				} else if (res instanceof MakeAndConsumeExecuteResult) {
 				} else {

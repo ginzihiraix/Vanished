@@ -39,12 +39,14 @@ public class DeliverRoom extends Room {
 	public class CallForItem {
 		public ItemDef itemDef;
 		public double price;
+		public int priceIndex;
 		public double numPick;
 		public long durationToSell;
 
-		public CallForItem(ItemDef itemDef, double price, double numPick, long durationToSell) {
+		public CallForItem(ItemDef itemDef, double price, int priceIndex, double numPick, long durationToSell) {
 			this.itemDef = itemDef;
 			this.price = price;
+			this.priceIndex = priceIndex;
 			this.numPick = numPick;
 			this.durationToSell = durationToSell;
 		}
@@ -72,6 +74,7 @@ public class DeliverRoom extends Room {
 		if (sm == null) return null;
 
 		double price = sm.GetPriceWithRate();
+		int priceIndex = sm.GetPriceIndex();
 
 		// 購入する個数を決定する。
 		double minNumPick = Double.MAX_VALUE;
@@ -90,13 +93,13 @@ public class DeliverRoom extends Room {
 		// TODO:購入時間を計算する。個数に比例する。
 		long durationToSell = deliverRoomDef.durationForDeliver;
 
-		CallForItem callForItem = new CallForItem(itemDef, price, minNumPick, durationToSell);
+		CallForItem callForItem = new CallForItem(itemDef, price, priceIndex, minNumPick, durationToSell);
 		return callForItem;
 	}
 
-	public void SetMaterialPriceRate(ItemDef itemDef, double rate) {
+	public void SetMaterialPriceIndex(ItemDef itemDef, int priceIndex) {
 		StockManager sm = deliverStockManager.get(itemDef);
-		sm.SetPriceRate(rate);
+		sm.SetPriceWithIndex(priceIndex);
 	}
 
 	// アイテムを売る。
@@ -115,10 +118,10 @@ public class DeliverRoom extends Room {
 	}
 
 	// 商品価格に対してフォードバックを与える。いくらだったらNo1の選択肢になったのか、各Humanがフィードバックを与える。
-	public void FeedbackAboutDeliverPrice(ItemDef itemDef, double price, double quantity) {
+	public void FeedbackAboutDeliverPrice(ItemDef itemDef, int priceIndex, double quantity) {
 		// System.out.println("FeedbackAboutDeliverPrice : " + this.roomDef.name + ", " + itemDef.GetName() + ", " + price + ", " + quantity);
 		StockManager sm = deliverStockManager.get(itemDef);
-		sm.Feedback(price, quantity);
+		sm.Feedback(priceIndex, quantity);
 	}
 
 	// ////////////////////////////////////////////////////////
