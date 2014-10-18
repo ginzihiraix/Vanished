@@ -172,7 +172,10 @@ public class HumanStatus {
 				this.Move(result.deliverRoom);
 				this.Sell(callForItem, simulation);
 
-				if (this.money < 0) throw new HumanSimulationException("TryTrader : no money");
+				if (this.money < 0) {
+					// System.out.println("mone<0");
+					throw new HumanSimulationException("TryTrader : no money");
+				}
 
 				TraderExecuteResult eres = new TraderExecuteResult(result, itemCatalog, callForItem);
 				ret.add(eres);

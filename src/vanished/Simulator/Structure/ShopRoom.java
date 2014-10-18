@@ -1,6 +1,7 @@
 package vanished.Simulator.Structure;
 
 import vanished.Simulator.ExponentialMovingAverage;
+import vanished.Simulator.HumanSimulationException;
 import vanished.Simulator.Item.Item;
 import vanished.Simulator.Item.ItemDef;
 
@@ -58,8 +59,6 @@ public class ShopRoom extends DeliverRoom {
 	private ItemCatalog GetProductItem(double maxMoney, double maxNumPick, double price) {
 		ShopRoomDef shopRoomDef = (ShopRoomDef) roomDef;
 
-		if (this.shopStockManager.IsOpen() == false) return null;
-
 		// å¬êîÇåàÇﬂÇÈÅB
 		double minNumPick = Double.MAX_VALUE;
 		{
@@ -97,7 +96,7 @@ public class ShopRoom extends DeliverRoom {
 	public Item BuyProductItem(long timeNow, ItemCatalog itemCatalog, boolean simulation) throws Exception {
 		ShopRoomDef shopRoomDef = (ShopRoomDef) roomDef;
 
-		if (this.shopStockManager.IsOpen() == false) throw new Exception("aaa");
+		if (itemCatalog.numPick <= 0) throw new HumanSimulationException("numPick <= 0");
 
 		this.Enter(timeNow, shopRoomDef.durationToSell, simulation);
 
@@ -125,7 +124,7 @@ public class ShopRoom extends DeliverRoom {
 	// ////////////////////////////////////////////////////////
 	// ////////////////////////////////////////////////////////
 
-	private ExponentialMovingAverage productInputMoneyEMA = new ExponentialMovingAverage(60L * 24L * 10, true);
+	private ExponentialMovingAverage productInputMoneyEMA = new ExponentialMovingAverage(60L * 24L * 1, true);
 
 	public double GetProductInputStockEMA(long timeNow) {
 		return this.shopStockManager.GetInputStockEMA(timeNow);

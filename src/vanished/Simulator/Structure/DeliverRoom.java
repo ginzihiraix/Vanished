@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Map.Entry;
 import java.util.TreeMap;
 
+import vanished.Simulator.ExponentialMovingAverage;
 import vanished.Simulator.Item.ItemDef;
 import vanished.Simulator.Item.ItemDefComparator;
 
@@ -69,7 +70,6 @@ public class DeliverRoom extends Room {
 
 		StockManager sm = deliverStockManager.get(itemDef);
 		if (sm == null) return null;
-		if (sm.IsOpen() == false) return null;
 
 		double price = sm.GetPriceWithRate();
 
@@ -104,13 +104,13 @@ public class DeliverRoom extends Room {
 
 		// アイテムを格納する。
 		StockManager sm = deliverStockManager.get(callForItem.itemDef);
-		if (sm.IsOpen() == false) throw new Exception("aaaa");
 
 		sm.Put(timeNow, callForItem.numPick, simulation);
 
 		if (simulation == false) {
 			// 金を払う。
 			this.AddMoney(timeNow, -callForItem.price * callForItem.numPick);
+			materialOutputMoneyEMA.Add(timeNow, callForItem.price * callForItem.numPick);
 		}
 	}
 
@@ -121,29 +121,21 @@ public class DeliverRoom extends Room {
 		sm.Feedback(price, quantity);
 	}
 
-	// ////////////
-	// //////////////////////////////////////////
+	// ////////////////////////////////////////////////////////
 	// ////////////////////////////////////////////////////////
 	// イベント記録用
 	// ////////////////////////////////////////////////////////
 	// ////////////////////////////////////////////////////////
 
-	public void DiscardOldLog(long timeNow) throws Exception {
-		super.DiscardOldLog(timeNow);
+	private ExponentialMovingAverage materialOutputMoneyEMA = new ExponentialMovingAverage(60L * 24L * 1, true);
 
-		// long duration = 60L * 24L * 365L * 10L;
-		// for (Entry<ItemDef, StockManager> e : deliverStockManager.entrySet()) {
-		// StockManager sm = e.getValue();
-		// sm.DiscardOldLog(timeNow - duration);
-		// }
+	public double GetMaterialOutputMoneyEMA(long timeNow) {
+		return this.materialOutputMoneyEMA.GetAverage(timeNow);
 	}
 
-	// public void WriteLog(long timeNow) throws Exception {
-	// for (Entry<ItemDef, StockManager> e : deliverStockManager.entrySet()) {
-	// StockManager sm = e.getValue();
-	// sm.WriteLog(timeNow);
-	// }
-	// }
+	public void DiscardOldLog(long timeNow) throws Exception {
+		super.DiscardOldLog(timeNow);
+	}
 
 	// /////////////////////////////////////////////////////////////////////
 	// /////////////////////////////////////////////////////////////////////

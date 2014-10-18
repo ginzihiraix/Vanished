@@ -13,26 +13,12 @@ public class StockManager {
 	private double price;
 	private double priceRate = 1;
 
-	private boolean open = true;
-
 	private double numStock;
 
 	public StockManager(ItemDef itemDef, StockManagerInfo stockManagerInfo) {
 		this.itemDef = itemDef;
 		this.stockManagerInfo = stockManagerInfo;
 		price = 1;
-	}
-
-	public boolean IsOpen() {
-		return open;
-	}
-
-	public void Close() {
-		open = false;
-	}
-
-	public void Open() {
-		open = true;
 	}
 
 	public double GetPriceWithRate() {

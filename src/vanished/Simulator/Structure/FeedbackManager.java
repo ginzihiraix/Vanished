@@ -29,7 +29,7 @@ public class FeedbackManager {
 			int index = 0;
 			for (Entry<Double, FeedbackLog> e : logs.entrySet()) {
 				FeedbackLog log = e.getValue();
-				ret[index] = log;
+				ret[index] = new FeedbackLog(log.price, log.impressionTotal, log.quantityTotal);
 				index++;
 			}
 		}
@@ -60,7 +60,7 @@ public class FeedbackManager {
 					value[i] = ret[i].quantityTotal;
 				}
 
-				for (int frame = 0; frame < 10; frame++) {
+				for (int frame = 0; frame < 1; frame++) {
 					double[] value2 = new double[num];
 					for (int i = 0; i < num; i++) {
 						if (i == 0) {

@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Map.Entry;
 import java.util.TreeMap;
 
+import vanished.Simulator.ExponentialMovingAverage;
 import vanished.Simulator.HumanManager;
 import vanished.Simulator.MapManager;
 import vanished.Simulator.Item.Item;
@@ -17,8 +18,6 @@ import vanished.Simulator.Structure.FactoryRoomDef.FactoryProductInfo;
 public class FactoryRoom extends ShopRoom {
 
 	private boolean forBuilding = false;
-
-	private boolean openFactory = true;
 
 	private FactoryProductManager factoryProductManager;
 
@@ -117,8 +116,6 @@ public class FactoryRoom extends ShopRoom {
 	// 欲しい人材リストを返す。
 	public CallForMaker GetDesiredMaker(double numMakeMax) {
 
-		if (this.openFactory == false) return null;
-
 		// 作るアイテムの個数を調べる。
 		double numMakableMin = Double.MAX_VALUE;
 		{
@@ -199,8 +196,6 @@ public class FactoryRoom extends ShopRoom {
 	// 作業してアイテムを作る。
 	public void Make(CallForMaker cfm, long timeNow, boolean simulation) throws Exception {
 
-		if (this.openFactory == false) throw new Exception("fatal error");
-
 		this.Enter(timeNow, cfm.duration, simulation);
 
 		// 製品を増やす。
@@ -220,6 +215,8 @@ public class FactoryRoom extends ShopRoom {
 
 			// 賃金を払う。
 			this.AddMoney(timeNow, -cfm.gain);
+
+			makerOutputMoneyEMA.Add(timeNow, cfm.gain);
 		}
 	}
 
@@ -259,6 +256,12 @@ public class FactoryRoom extends ShopRoom {
 		super.DiscardOldLog(timeNow);
 	}
 
+	private ExponentialMovingAverage makerOutputMoneyEMA = new ExponentialMovingAverage(60L * 24L * 1, true);
+
+	public double GetMakerOutputMoneyEMA(long timeNow) {
+		return this.makerOutputMoneyEMA.GetAverage(timeNow);
+	}
+
 	// /////////////////////////////////////////////////////////////////////
 	// /////////////////////////////////////////////////////////////////////
 	// Test
@@ -271,15 +274,16 @@ public class FactoryRoom extends ShopRoom {
 		if (timeNow - this.timeLastManagePrice < 60 * 24) return;
 
 		// 数量が0になるような料金を追加しておく。
-		if (true) {
-			this.FeedbackAboutProductPrice(0, 0);
+		if (false) {
+			this.FeedbackAboutProductPrice(this.shopStockManager.GetPriceWithRate() * 100, 0);
 
 			CallForMaker cfm = this.GetDesiredMaker(Double.MAX_VALUE);
-			this.FeedbackAboutMakerPrice(cfm, 0, 0);
+			this.FeedbackAboutMakerPrice(cfm, this.factoryProductManager.factoryMakerManager.wage / 100, 0);
 
 			for (Entry<ItemDef, FactoryMaterialManager> e2 : this.factoryProductManager.factoryMaterialManager.entrySet()) {
 				ItemDef materialItemDef = e2.getKey();
-				this.FeedbackAboutDeliverPrice(materialItemDef, 0, 0);
+				StockManager msm = this.deliverStockManager.get(materialItemDef);
+				this.FeedbackAboutDeliverPrice(materialItemDef, msm.GetPriceWithRate() / 100, 0);
 			}
 		}
 
@@ -294,74 +298,19 @@ public class FactoryRoom extends ShopRoom {
 			durationFutureTarget = 60L * 24L * 10L;
 		}
 
-		if (false) {
-			System.out.println("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$");
-			System.out.println("$                     ManageProductPricie                     $");
-			System.out.println("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$");
-			{
-				FeedbackLog[] feedbackList = shopStockManager.feedbackManager.CollectResultWithEqualImpressionAdjust();
-				// TODO
-				for (FeedbackLog feedback : feedbackList) {
-					String flag = "";
-					if (feedback.price == this.shopStockManager.GetPriceWithRate()) {
-						flag = " <-BEST";
-					}
-					System.out.println(feedback.price + "円, " + feedback.impressionTotal + "回, " + feedback.quantityTotal / duration
-							* durationFutureTarget + "個" + flag);
-				}
-			}
-
-			System.out.println("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$");
-			System.out.println("$                    ManageMaterialPricie                     $");
-			System.out.println("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$");
-			for (Entry<ItemDef, StockManager> e : deliverStockManager.entrySet()) {
-				StockManager msm = e.getValue();
-				ItemDef itemDef = e.getKey();
-				FactoryMaterialManager fmm = this.factoryProductManager.factoryMaterialManager.get(itemDef);
-				System.out.println(msm.stockManagerInfo.itemDef.GetName());
-				FeedbackLog[] feedbackList = msm.feedbackManager.CollectResultWithEqualImpressionAdjust();
-				// TODO
-				for (FeedbackLog feedback : feedbackList) {
-					String flag = "";
-					if (feedback.price == msm.GetPriceWithRate()) {
-						flag = " <-BEST";
-					}
-					System.out.println(feedback.price + "円, " + feedback.impressionTotal + "回, " + feedback.quantityTotal
-							/ fmm.factoryMaterialInfo.amount / duration * durationFutureTarget + "個" + flag);
-				}
-			}
-
-			System.out.println("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$");
-			System.out.println("$                      ManageMakerWage                        $");
-			System.out.println("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$");
-			{
-				FeedbackLog[] feedbackList = this.factoryProductManager.factoryMakerManager.feedbackManager.CollectResultWithEqualImpressionAdjust();
-				// TODO
-				for (FeedbackLog feedback : feedbackList) {
-					String flag = "";
-					if (feedback.price == this.factoryProductManager.factoryMakerManager.wage) {
-						flag = " <-BEST";
-					}
-					System.out.println(feedback.price + "円, " + feedback.impressionTotal + "回, " + feedback.quantityTotal / duration
-							* durationFutureTarget + "個" + flag);
-				}
-			}
-		}
-
 		double productNumStock = this.shopStockManager.GetNumStock();
 		{
 			class Pack {
 				FeedbackLog productFeedback = null;
 				FeedbackLog makerFeedback = null;
 				TreeMap<ItemDef, FeedbackLog> materialFeedback = null;
-				double speedDef = 0;
-				double stockDef = 0;
-				double gain = 0;
+				double profit = 0;
 
-				public Pack(FeedbackLog productFeedback, FeedbackLog makerFeedback, TreeMap<ItemDef, FeedbackLog> materialFeedback) {
+				public Pack(FeedbackLog productFeedback, FeedbackLog makerFeedback, TreeMap<ItemDef, FeedbackLog> materialFeedback, double profit) {
 					this.productFeedback = productFeedback;
 					this.makerFeedback = makerFeedback;
 					this.materialFeedback = materialFeedback;
+					this.profit = profit;
 				}
 			}
 
@@ -373,77 +322,163 @@ public class FactoryRoom extends ShopRoom {
 			FeedbackLog[] productFeedbackList = this.shopStockManager.feedbackManager.CollectResultWithEqualImpressionAdjust();
 			for (FeedbackLog productFeedback : productFeedbackList) {
 
+				double salesAccount = productFeedback.quantityTotal / duration * durationFutureTarget * productFeedback.price;
+
 				// 販売量に見合うだけの労働者を確保するための価格設定を探す。
 				FeedbackLog makerFeedbackBest = null;
+				double makerCostBest = Double.MAX_VALUE;
 				{
-					double targetSpeedMake;
-					if (this.forBuilding == false) {
-						targetSpeedMake = productFeedback.quantityTotal / duration - productNumStock / durationFutureTarget;
-					} else {
-						targetSpeedMake = 1.0 / durationFutureTarget;
-					}
-
 					FeedbackLog[] makerFeedbackList = this.factoryProductManager.factoryMakerManager.feedbackManager
 							.CollectResultWithEqualImpressionAdjust();
-					double scoreBest = Double.MAX_VALUE;
+
+					double priceMax = 0;
 					for (FeedbackLog makerFeedback : makerFeedbackList) {
-						double score = Math.abs(targetSpeedMake - makerFeedback.quantityTotal / duration);
-						if (score < scoreBest) {
-							scoreBest = score;
+						if (makerFeedback.price > priceMax) {
+							priceMax = makerFeedback.price;
+						}
+					}
+
+					for (FeedbackLog makerFeedback : makerFeedbackList) {
+
+						double productAdd = makerFeedback.quantityTotal / duration * durationFutureTarget;
+						double productSub = productFeedback.quantityTotal / duration * durationFutureTarget;
+
+						double cost = productAdd / this.factoryProductManager.factoryMakerManager.factoryMakerInfo.numProductPerMake
+								* makerFeedback.price;
+
+						double costExt = 0;
+						double res = productAdd + productNumStock - productSub;
+						if (res < 0) {
+							costExt = -res / this.factoryProductManager.factoryMakerManager.factoryMakerInfo.numProductPerMake * priceMax * 1000;
+						}
+
+						double score = cost + costExt;
+
+						if (score < makerCostBest) {
+							makerCostBest = score;
 							makerFeedbackBest = makerFeedback;
 						}
 					}
 				}
 
 				// 販売量に見合うだけの材料を仕入れるための価格設定を探す。
-				TreeMap<ItemDef, FeedbackLog> materialFeedbackBest = new TreeMap<ItemDef, FeedbackLog>(new ItemDefComparator());
+				TreeMap<ItemDef, FeedbackLog> materialFeedbackBestMap = new TreeMap<ItemDef, FeedbackLog>(new ItemDefComparator());
+				double materialCostBestTotal = 0;
+
 				for (Entry<ItemDef, FactoryMaterialManager> e2 : this.factoryProductManager.factoryMaterialManager.entrySet()) {
 					ItemDef materialItemDef = e2.getKey();
 					FactoryMaterialManager fmm = e2.getValue();
 					StockManager msm = this.deliverStockManager.get(materialItemDef);
 
 					// 販売速度numSellと最も近い速度で仕入れできる、最適仕入れ価格を見つける。
-					FeedbackLog materialFeedbackLocalBest = null;
+					FeedbackLog materialFeedbackBest = null;
+					double materialCostBest = Double.MAX_VALUE;
 					{
-						double materialStock = msm.GetNumStock();
-						double targetSpeedMaterial;
-						if (this.forBuilding == false) {
-							targetSpeedMaterial = (productFeedback.quantityTotal / duration - productNumStock / durationFutureTarget)
-									* fmm.factoryMaterialInfo.amount - materialStock / durationFutureTarget;
-						} else {
-							targetSpeedMaterial = 1.0 * fmm.factoryMaterialInfo.amount / durationFutureTarget;
-						}
+						double materialNumStock = msm.GetNumStock();
 
 						FeedbackLog[] materialFeedbackList = msm.feedbackManager.CollectResultWithEqualImpressionAdjust();
-						double scoreBest = Double.MAX_VALUE;
+
+						double priceMax = 0;
 						for (FeedbackLog materialFeedback : materialFeedbackList) {
-							double score = Math.abs(targetSpeedMaterial - materialFeedback.quantityTotal / duration);
-							if (score <= scoreBest) {
-								scoreBest = score;
-								materialFeedbackLocalBest = materialFeedback;
+							if (materialFeedback.price > priceMax) {
+								priceMax = materialFeedback.price;
+							}
+						}
+
+						for (FeedbackLog materialFeedback : materialFeedbackList) {
+
+							double materialAdd = materialFeedback.quantityTotal / duration * durationFutureTarget;
+							double materialSub = productFeedback.quantityTotal * fmm.factoryMaterialInfo.amount / duration * durationFutureTarget;
+
+							double cost = materialAdd * materialFeedback.price;
+
+							double costExt = 0;
+							double res = materialAdd + materialNumStock - materialSub;
+							if (res < 0) {
+								costExt = -res * priceMax * 1000;
+							}
+
+							double score = cost + costExt;
+
+							if (score <= materialCostBest) {
+								materialCostBest = score;
+								materialFeedbackBest = materialFeedback;
 							}
 						}
 					}
-					materialFeedbackBest.put(materialItemDef, materialFeedbackLocalBest);
+					materialFeedbackBestMap.put(materialItemDef, materialFeedbackBest);
+					materialCostBestTotal += materialCostBest;
 				}
 
-				Pack pack = new Pack(productFeedback, makerFeedbackBest, materialFeedbackBest);
+				Pack pack = new Pack(productFeedback, makerFeedbackBest, materialFeedbackBestMap, salesAccount - makerCostBest
+						- materialCostBestTotal);
 				packs.add(pack);
 			}
 
 			if (true) {
-				// 将来の在校調整結果の精度を計算する。
+				Pack packMax = null;
+				if (true) {
+					double profitMax = -Double.MAX_VALUE;
+					for (Pack pack : packs) {
+						if (pack.profit > profitMax) {
+							packMax = pack;
+							profitMax = pack.profit;
+						}
+					}
+				}
+
 				if (false) {
 					for (Pack pack : packs) {
-						double speedSell = pack.productFeedback.quantityTotal / duration;
+						String flag = "";
+						if (pack == packMax) {
+							flag = "<-selected";
+						}
+						String line = String.format("%f, %f %s", pack.productFeedback.quantityTotal / duration * durationFutureTarget,
+								pack.makerFeedback.quantityTotal / duration * durationFutureTarget, flag);
+						System.out.println(line);
+					}
+				}
 
-						double speedMakeProduct = pack.makerFeedback.quantityTotal / duration + productNumStock / durationFutureTarget;
+				if (true) {
+					for (Pack pack : packs) {
 
-						double speedDefTotal = Math.abs(speedMakeProduct - speedSell);
-						double stockDefTotal = Math.abs(productNumStock + (pack.makerFeedback.quantityTotal - pack.productFeedback.quantityTotal)
-								/ duration * durationFutureTarget)
-								/ productNumStock;
-						int count = 1;
+						FeedbackLog productFeedback = pack.productFeedback;
+						FeedbackLog makerFeedback = pack.makerFeedback;
+
+						double gain = productFeedback.quantityTotal / duration * durationFutureTarget * productFeedback.price;
+
+						System.out.println("================================");
+						if (pack == packMax) {
+							System.out.println("Selected");
+						}
+
+						System.out.println("利益 : " + pack.profit);
+
+						System.out.println("売り上げ : " + gain);
+						System.out.println(productFeedback.price + ", " + productFeedback.quantityTotal / duration * durationFutureTarget);
+
+						// 販売量に見合うだけの労働者を確保するための価格設定を探す。
+						{
+							double productAdd = makerFeedback.quantityTotal / duration * durationFutureTarget;
+							double productSub = productFeedback.quantityTotal / duration * durationFutureTarget;
+
+							double cost = productAdd / this.factoryProductManager.factoryMakerManager.factoryMakerInfo.numProductPerMake
+									* makerFeedback.price;
+
+							double costExt = 0;
+							double res = productAdd + productNumStock - productSub;
+							if (res < 0) {
+								costExt = -res / this.factoryProductManager.factoryMakerManager.factoryMakerInfo.numProductPerMake
+										* this.factoryProductManager.factoryMakerManager.wage * 10;
+							}
+
+							double costTotal = cost + costExt;
+
+							System.out.println(makerFeedback.price + ", " + makerFeedback.quantityTotal / duration * durationFutureTarget);
+							System.out.println("costTotal : " + costTotal + " = " + cost + " + " + costExt);
+						}
+
+						// 販売量に見合うだけの材料を仕入れるための価格設定を探す。
 
 						for (Entry<ItemDef, FactoryMaterialManager> e2 : this.factoryProductManager.factoryMaterialManager.entrySet()) {
 							ItemDef materialItemDef = e2.getKey();
@@ -451,104 +486,27 @@ public class FactoryRoom extends ShopRoom {
 							StockManager msm = this.deliverStockManager.get(materialItemDef);
 							FeedbackLog materialFeedback = pack.materialFeedback.get(materialItemDef);
 
-							double materialNumStock = msm.GetNumStock();
+							// 販売速度numSellと最も近い速度で仕入れできる、最適仕入れ価格を見つける。
+							{
+								double materialNumStock = msm.GetNumStock();
 
-							double speedProvideMaterial = materialFeedback.quantityTotal / fmm.factoryMaterialInfo.amount / duration
-									+ materialNumStock / fmm.factoryMaterialInfo.amount / durationFutureTarget;
-							double speedDef = Math.abs(speedProvideMaterial - speedSell);
+								double materialAdd = materialFeedback.quantityTotal / duration * durationFutureTarget;
+								double materialSub = productFeedback.quantityTotal * fmm.factoryMaterialInfo.amount / duration * durationFutureTarget;
 
-							double stockDef = Math.abs(materialNumStock + (pack.makerFeedback.quantityTotal - materialFeedback.quantityTotal)
-									/ duration * durationFutureTarget)
-									/ materialNumStock;
-							speedDefTotal += speedDef;
-							stockDefTotal += stockDef;
-							count++;
-						}
+								double cost = materialAdd * materialFeedback.price;
 
-						pack.speedDef = speedDefTotal / count;
-						pack.stockDef = stockDefTotal / count;
-					}
-				}
+								double costExt = 0;
+								double res = materialAdd + materialNumStock - materialSub;
+								if (res < 0) {
+									costExt = -res * msm.GetPriceWithRate() * 10;
+								}
 
-				// 足りない材料は、未来のリスクを考慮して10倍で仕入れると仮定して、コストを計算。
-				for (Pack pack : packs) {
-					double gain = pack.productFeedback.quantityTotal / duration * durationFutureTarget * pack.productFeedback.price;
+								double costTotal = cost + costExt;
 
-					{
-						double cost = pack.makerFeedback.quantityTotal
-								/ this.factoryProductManager.factoryMakerManager.factoryMakerInfo.numProductPerMake * pack.makerFeedback.price;
-						gain -= cost;
-
-						double res = productNumStock + pack.makerFeedback.quantityTotal / duration * durationFutureTarget
-								- pack.productFeedback.quantityTotal / duration * durationFutureTarget;
-						if (res < 0) {
-							double costExt = -res / this.factoryProductManager.factoryMakerManager.factoryMakerInfo.numProductPerMake
-									* pack.makerFeedback.price * 10;
-							gain -= costExt;
-						}
-					}
-
-					for (Entry<ItemDef, FactoryMaterialManager> e2 : this.factoryProductManager.factoryMaterialManager.entrySet()) {
-						ItemDef materialItemDef = e2.getKey();
-						FactoryMaterialManager fmm = e2.getValue();
-						FeedbackLog materialFeedback = pack.materialFeedback.get(materialItemDef);
-						StockManager msm = this.deliverStockManager.get(materialItemDef);
-						double materialNumStock = msm.GetNumStock();
-
-						double cost = materialFeedback.quantityTotal * materialFeedback.price;
-						gain -= cost;
-
-						double res = materialNumStock + materialFeedback.quantityTotal / duration * durationFutureTarget
-								- pack.productFeedback.quantityTotal * fmm.factoryMaterialInfo.amount / duration * durationFutureTarget;
-						if (res < 0) {
-							double costExt = -res * materialFeedback.price * 10;
-							gain -= costExt;
-						}
-					}
-
-					pack.gain = gain;
-				}
-
-				double gainMax = -Double.MAX_VALUE;
-				Pack packMax = null;
-
-				if (false) {
-					for (Pack pack : packs) {
-						double s = Math.abs(pack.speedDef * durationFutureTarget / productNumStock);
-						if (s < 0.05) {
-							if (pack.gain > gainMax) {
-								packMax = pack;
-							}
-						}
-					}
-				}
-
-				if (true) {
-					for (Pack pack : packs) {
-						if (pack.gain > gainMax) {
-							packMax = pack;
-						}
-					}
-				}
-
-				if (false) {
-					for (Pack pack : packs) {
-						double s = Math.abs(pack.speedDef * durationFutureTarget / productNumStock);
-						if (s < 0.05) {
-							if (pack.gain > gainMax) {
-								packMax = pack;
-							}
-						}
-					}
-				}
-
-				if (false) {
-					if (packMax == null) {
-						double min = Double.MAX_VALUE;
-						for (Pack pack : packs) {
-							if (pack.speedDef < min) {
-								min = pack.speedDef;
-								packMax = pack;
+								System.out.println(materialFeedback.price + ", " + materialFeedback.quantityTotal / fmm.factoryMaterialInfo.amount
+										/ duration * durationFutureTarget);
+								System.out.println("material " + materialItemDef.GetName() + " costTotal : " + costTotal + " = " + cost + " + "
+										+ costExt);
 							}
 						}
 					}
@@ -557,34 +515,18 @@ public class FactoryRoom extends ShopRoom {
 				// 最適な価格に設定する。
 				{
 					{
-						if (packMax.productFeedback.price == 0) {
-							this.shopStockManager.Close();
-						} else {
-							this.shopStockManager.Open();
-							this.shopStockManager.SetPrice(packMax.productFeedback.price);
-						}
+						this.shopStockManager.SetPrice(packMax.productFeedback.price);
 					}
 
 					{
-						if (packMax.makerFeedback.price == 0) {
-							this.openFactory = false;
-						} else {
-							this.openFactory = true;
-							this.factoryProductManager.factoryMakerManager.wage = packMax.makerFeedback.price;
-						}
+						this.factoryProductManager.factoryMakerManager.wage = packMax.makerFeedback.price;
 					}
 
 					for (Entry<ItemDef, StockManager> e : deliverStockManager.entrySet()) {
 						ItemDef itemDef = e.getKey();
 						StockManager msm = e.getValue();
 						FeedbackLog feedbackMaterial = packMax.materialFeedback.get(itemDef);
-
-						if (feedbackMaterial.price == 0) {
-							msm.Close();
-						} else {
-							msm.Open();
-							msm.SetPrice(feedbackMaterial.price);
-						}
+						msm.SetPrice(feedbackMaterial.price);
 					}
 				}
 			}
@@ -647,6 +589,7 @@ public class FactoryRoom extends ShopRoom {
 			}
 		}
 	}
+	
 	// /////////////////////////////////////////////////////////////////////
 	// /////////////////////////////////////////////////////////////////////
 	// Obsolete

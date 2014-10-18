@@ -263,11 +263,11 @@ public class GUI_Game implements GLEventListener, KeyListener, MouseListener, Mo
 	@Override
 	public void mouseDragged(MouseEvent event) {
 
-		System.out.println(event.getModifiers());
+		// System.out.println(event.getModifiers());
 
 		try {
 			Point point = event.getPoint();
-			System.out.println(point.x + ", " + point.y);
+			// System.out.println(point.x + ", " + point.y);
 
 			if (pointOld != null) {
 				if (event.getModifiers() == MouseEvent.BUTTON1_MASK) {
@@ -292,7 +292,6 @@ public class GUI_Game implements GLEventListener, KeyListener, MouseListener, Mo
 						camera.MoveLookat(def);
 					}
 				} else if (event.getModifiers() == MouseEvent.BUTTON2_MASK) {
-					System.out.println("fdsafawelkfja");
 
 					double[][] p1Data = { { -point.x }, { point.y }, { 1 } };
 					double[][] p2Data = { { -pointOld.x }, { pointOld.y }, { 1 } };

@@ -96,50 +96,44 @@ public class GraphicManager {
 		{
 			long timeNow = hm.GetOldestTime();
 
-			// 最大値を計算する。
-			double max = 0;
-			for (Building building : buildingList) {
-				ArrayList<Room> rooms = building.GetRoomList();
-				for (Room room : rooms) {
-					if (room instanceof FactoryRoom == false) continue;
-					FactoryRoom froom = (FactoryRoom) room;
-
-					double productInputMoneyEMA = froom.GetProductInputMoneyEMA(timeNow);
-					if (productInputMoneyEMA > max) {
-						max = productInputMoneyEMA;
-					}
-				}
-			}
-
-			// グラフを書く。
+			// 建物の頭上にグラフを書く。
 			{
 				gl.glDisable(GL2.GL_TEXTURE_2D);
 				gl.glDisable(GL2.GL_BLEND);
 				lightGlobal.SetLight(gl);
 				gl.glEnable(GL2.GL_COLOR_MATERIAL);
-				// gl.glEnable(GL2.GL_NORMALIZE);
 
 				for (Building building : buildingList) {
 					Rect rect = building.GetLocation();
-					double px = (rect.left + rect.right) / 2.0;
-					double pz = (rect.bottom + rect.top) / 2.0;
-					double[][] posData = { { px }, { 1 }, { pz } };
-					MyMatrix pos = new MyMatrix(posData);
 
 					ArrayList<Room> rooms = building.GetRoomList();
-					double numRoom = 0;
-					for (Room room : rooms) {
-						if (room instanceof FactoryRoom == false) continue;
-						numRoom++;
-					}
-
-					double numRoom2 = 0;
+					ArrayList<Double> bars = new ArrayList<Double>();
+					bars.add(0.0);
 					for (Room room : rooms) {
 						if (room instanceof FactoryRoom == false) continue;
 						FactoryRoom froom = (FactoryRoom) room;
-						double productInputMoneyEMA = froom.GetProductInputMoneyEMA(timeNow);
 
+						bars.add(froom.GetProductInputMoneyEMA(timeNow));
+						bars.add(froom.GetMakerOutputMoneyEMA(timeNow));
+						bars.add(froom.GetMaterialOutputMoneyEMA(timeNow));
+						bars.add(0.0);
+						bars.add(0.0);
+					}
+					bars.remove(bars.size() - 1);
+					bars.remove(bars.size() - 1);
+					bars.add(0.0);
+
+					// 最大値を計算する。
+					double max = -Double.MAX_VALUE;
+					for (Double v : bars) {
+						if (v > max) max = v;
+					}
+
+					for (int i = 0; i < bars.size(); i++) {
 						{
+							double height = bars.get(i) / max * 3;
+							if (height == 0) continue;
+
 							gl.glLoadIdentity();
 
 							float[] m0 = { 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, -1, 0, 0, 0, 0, 1 };
@@ -149,19 +143,55 @@ public class GraphicManager {
 							gl.glMultMatrixf(m2, 0);
 
 							MyMatrix RModel = MatrixUtility.ConstructDiagonalMatrix(1, 3);
+							double px = (rect.left + rect.right) / 2.0 + 1.0 * i / (bars.size() - 1) - 0.5;
+							double pz = (rect.bottom + rect.top) / 2.0;
+							double[][] posData = { { px }, { 1 + height / 2 }, { pz } };
+							MyMatrix pos = new MyMatrix(posData);
 							float[] m3 = MU.ExpandMat4(MU.GetR4(RModel, pos));
 							gl.glMultMatrixf(m3, 0);
 
-							gl.glScaled(0.03, 3 * productInputMoneyEMA / max, 0.03);
+							gl.glScaled(0.03, height, 0.03);
 
-							gl.glRotated(-90.0, 1.0, 0.0, 0.0);
+							// gl.glRotated(-90.0, 1.0, 0.0, 0.0);
 
 							gl.glColor3d(1, 0, 0);
-							glut.glutSolidCylinder(1, 1, 16, 1);
+							// glut.glutSolidCylinder(1, 1, 16, 1);
+							glut.glutSolidCube(1);
 						}
 
-						numRoom2++;
 					}
+
+					// for (Room room : rooms) {
+					// if (room instanceof FactoryRoom == false) continue;
+					// FactoryRoom froom = (FactoryRoom) room;
+					//
+					// {
+					// double productInputMoneyEMA = froom.GetProductInputMoneyEMA(timeNow);
+					//
+					// gl.glLoadIdentity();
+					//
+					// float[] m0 = { 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, -1, 0, 0, 0, 0, 1 };
+					// gl.glMultMatrixf(m0, 0);
+					//
+					// float[] m2 = camera.GetRi4();
+					// gl.glMultMatrixf(m2, 0);
+					//
+					// MyMatrix RModel = MatrixUtility.ConstructDiagonalMatrix(1, 3);
+					// float[] m3 = MU.ExpandMat4(MU.GetR4(RModel, pos));
+					// gl.glMultMatrixf(m3, 0);
+					//
+					// gl.glScaled(0.03, 3 * productInputMoneyEMA / max, 0.03);
+					//
+					// // gl.glRotated(-90.0, 1.0, 0.0, 0.0);
+					//
+					// gl.glColor3d(1, 0, 0);
+					// // glut.glutSolidCylinder(1, 1, 16, 1);
+					// glut.glutSolidCube(1);
+					// }
+					//
+					// numSegment2++;
+					// }
+
 				}
 			}
 
