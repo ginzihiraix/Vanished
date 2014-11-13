@@ -37,15 +37,14 @@ public class StockManager {
 		return numStock;
 	}
 
-	public Item Get(long timeNow, double numPick, boolean simulation) throws Exception {
+	public double Get(long timeNow, double numPick, boolean simulation) throws Exception {
 		if (simulation == false) {
 			numStock -= numPick;
 			this.numStockEMA.Add(timeNow, numStock);
 			this.outputStockEMA.Add(timeNow, numPick);
-		} else {
 		}
-		Item ret = new Item(itemDef, numPick);
-		return ret;
+
+		return numPick;
 	}
 
 	public void Put(long timeNow, double numPut, boolean simulation) throws Exception {
@@ -88,7 +87,7 @@ public class StockManager {
 	public FeedbackManager feedbackManager = new FeedbackManager();
 
 	public void Feedback(int priceIndex, double quantity) {
-		feedbackManager.Add(priceIndex, quantity);
+		// feedbackManager.Add(priceIndex, quantity);
 	}
 
 	public void ResetStatisticalParameters() {

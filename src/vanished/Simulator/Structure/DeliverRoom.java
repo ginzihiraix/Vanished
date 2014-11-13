@@ -18,7 +18,7 @@ public class DeliverRoom extends Room {
 		for (Entry<ItemDef, StockManagerInfo> e : roomDef.materialStockManagerInfo.entrySet()) {
 			ItemDef itemDef = e.getKey();
 			StockManagerInfo smi = e.getValue();
-			StockManager sm = new StockManager(itemDef, smi);
+			StockManager sm = new StockManager(smi);
 			deliverStockManager.put(itemDef, sm);
 		}
 	}
@@ -81,9 +81,6 @@ public class DeliverRoom extends Room {
 		{
 			// Šó–]‚Ì”[•i”‚É‚æ‚é§–ñ
 			if (maxNumPick < minNumPick) minNumPick = maxNumPick;
-
-			// ˆê‰ñ‚É‰^‚Ñ‚ß‚é—Ê‚É‚æ‚é§–ñ
-			if (sm.stockManagerInfo.lotmax < minNumPick) minNumPick = sm.stockManagerInfo.lotmax;
 
 			// ‰¿Ši‚É‚æ‚é§–ñ
 			double numPickForMoney = maxMoney / price;

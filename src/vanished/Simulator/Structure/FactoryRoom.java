@@ -55,6 +55,7 @@ public class FactoryRoom extends ShopRoom {
 
 	// 欲しい人材リストを返す。
 	public CallForMaker GetDesiredMaker(double numMakeMax) {
+		FactoryRoomDef roomDef = (FactoryRoomDef) (this.roomDef);
 
 		// 作るアイテムの個数を調べる。
 		double numMakableMin = Double.MAX_VALUE;
@@ -76,8 +77,8 @@ public class FactoryRoom extends ShopRoom {
 
 		double gain = wageForFullWork * numMakableMin / this.factoryProductManager.factoryMakerManager.factoryMakerInfo.numProductPerMake;
 
-		CallForMaker cfw = new CallForMaker(this.factoryProductManager.factoryProductInfo.itemDef,
-				this.factoryProductManager.factoryMakerManager.factoryMakerInfo.skill, wageForFullWork, wageIndex, numMakableMin, duration, gain);
+		CallForMaker cfw = new CallForMaker(roomDef.productItemDef, this.factoryProductManager.factoryMakerManager.factoryMakerInfo.skill,
+				wageForFullWork, wageIndex, numMakableMin, duration, gain);
 		return cfw;
 	}
 
@@ -96,6 +97,7 @@ public class FactoryRoom extends ShopRoom {
 	}
 
 	public CallForMakerInKind GetDesiredMakerInKind(double numMakeMax) {
+		FactoryRoomDef roomDef = (FactoryRoomDef) (this.roomDef);
 
 		// 材料を必要とする場所は、InKindできない。
 		if (this.factoryProductManager.factoryMaterialManager.size() > 0) return null;
@@ -115,7 +117,7 @@ public class FactoryRoom extends ShopRoom {
 		long duration = (long) (numMakableMin / this.factoryProductManager.factoryMakerManager.factoryMakerInfo.numProductPerMake * this.factoryProductManager.factoryMakerManager.factoryMakerInfo.durationForMake);
 		if (duration == 0) duration = 1L;
 
-		CallForMakerInKind cfw = new CallForMakerInKind(this.factoryProductManager.factoryProductInfo.itemDef,
+		CallForMakerInKind cfw = new CallForMakerInKind(roomDef.productItemDef,
 				this.factoryProductManager.factoryMakerManager.factoryMakerInfo.skill, numMakableMin, duration);
 		return cfw;
 	}
@@ -136,8 +138,6 @@ public class FactoryRoom extends ShopRoom {
 
 	// 作業してアイテムを作る。
 	public void Make(CallForMaker cfm, long timeNow, boolean simulation) throws Exception {
-
-		this.Enter(timeNow, cfm.duration, simulation);
 
 		// 製品を増やす。
 		{
@@ -162,8 +162,6 @@ public class FactoryRoom extends ShopRoom {
 	}
 
 	public Item MakeInKind(CallForMakerInKind cfm, long timeNow, boolean simulation) throws Exception {
-
-		this.Enter(timeNow, cfm.duration, simulation);
 
 		if (simulation == false) {
 			// 材料を減らす。
@@ -473,7 +471,7 @@ public class FactoryRoom extends ShopRoom {
 				StockManager msm = e.getValue();
 				ItemDef itemDef = e.getKey();
 				FactoryMaterialManager fmm = this.factoryProductManager.factoryMaterialManager.get(itemDef);
-				System.out.println(msm.stockManagerInfo.itemDef.GetName());
+				// System.out.println(msm.stockManagerInfo.itemDef.GetName());
 				FeedbackLog[] feedbackList = msm.feedbackManager.CollectResultWithEqualImpressionAdjust();
 				// TODO
 				for (FeedbackLog feedback : feedbackList) {

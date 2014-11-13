@@ -14,7 +14,7 @@ public class FeedbackManager {
 	public void Add(int priceIndex, double price, double quantity) {
 		FeedbackLog log = logs.get(priceIndex);
 		if (log == null) {
-			log = new FeedbackLog(priceIndex, price);
+			// log = new FeedbackLog(priceIndex, price);
 			logs.put(priceIndex, log);
 		}
 		log.impressionTotal += 1;
@@ -29,7 +29,7 @@ public class FeedbackManager {
 			int index = 0;
 			for (Entry<Integer, FeedbackLog> e : logs.entrySet()) {
 				FeedbackLog log = e.getValue();
-				ret[index] = new FeedbackLog(log.priceIndex, log.price, log.impressionTotal, log.quantityTotal);
+				// ret[index] = new FeedbackLog(log.priceIndex, log.price, log.impressionTotal, log.quantityTotal);
 				index++;
 			}
 		}

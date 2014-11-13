@@ -18,7 +18,7 @@ public class Room {
 	private ExponentialMovingAverage outputMoneyMovingAverage = new ExponentialMovingAverage(60 * 24 * 365, true);
 
 	// ïîâÆÇ…Ç¢ÇÈêlÇÃÉäÉXÉg
-	private HumanExistRecordManager humanExistRoomManager = new HumanExistRecordManager();
+	// private HumanExistRecordManager humanExistRoomManager = new HumanExistRecordManager();
 
 	public Room(Building building, RoomDef roomDef) {
 		this.roomDef = roomDef;
@@ -97,7 +97,7 @@ public class Room {
 	}
 
 	public void DiscardOldLog(long timeNow) throws Exception {
-		this.humanExistRoomManager.DiscardOldLog(timeNow);
+		// this.humanExistRoomManager.DiscardOldLog(timeNow);
 	}
 
 	// ////////////////////////////////////////////////////////
@@ -109,8 +109,8 @@ public class Room {
 	EventLogManager numHuman = new EventLogManager(this.toString() + "_human");
 
 	public void WriteLog(long timeNow) throws Exception {
-		double num = this.humanExistRoomManager.MaxNum(timeNow, 1);
-		numHuman.Put(timeNow, num);
+//		double num = this.humanExistRoomManager.MaxNum(timeNow, 1);
+//		numHuman.Put(timeNow, num);
 	}
 
 }

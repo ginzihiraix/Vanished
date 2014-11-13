@@ -63,7 +63,7 @@ public class FactoryProductManager {
 		}
 
 		public void Feedback(int priceIndex, double quantity) {
-			feedbackManager.Add(priceIndex, quantity);
+			// feedbackManager.Add(priceIndex, quantity);
 		}
 
 		public FeedbackLog[] CollectResultWithEqualImpressionAdjust() {

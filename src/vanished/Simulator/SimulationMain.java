@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import vanished.Simulator.Item.ItemDef;
 import vanished.Simulator.Structure.Building;
 import vanished.Simulator.Structure.FactoryRoom;
+import vanished.Simulator.Structure.HumanExistRecordManager;
 import vanished.Simulator.Structure.Room;
 
 public class SimulationMain extends Thread {
@@ -40,24 +41,12 @@ public class SimulationMain extends Thread {
 				GlobalParameter.dm.GetItemDef("water");
 			}
 
-			// XXX:Utilityのテスト
-			if (false) {
-				UtilityManager um = new UtilityManager();
-				System.out.println(um.ComputeUtility(0));
-				ItemDef fish = GlobalParameter.dm.GetItemDef("fish");
-				um.AddUtility(fish.GetUtilities(), 1, 100);
-				System.out.println(um.ComputeUtility(100));
-				ItemDef water = GlobalParameter.dm.GetItemDef("water");
-				um.AddUtility(water.GetUtilities(), 1, 100);
-				System.out.println(um.ComputeUtility(100));
-				um.AddUtility(fish.GetUtilities(), 1, 100);
-				System.out.println(um.ComputeUtility(100));
-				um.AddUtility(fish.GetUtilities(), 1, 100);
-				System.out.println(um.ComputeUtility(100));
-				um.AddUtility(fish.GetUtilities(), 1, 100);
-				System.out.println(um.ComputeUtility(100));
-				um.AddUtility(fish.GetUtilities(), 1, 100);
-				System.out.println(um.ComputeUtility(100));
+			// XXX:テスト
+			if (true) {
+				HumanExistRecordManager hm = new HumanExistRecordManager(2);
+				hm.Add(0, 5, 0.8);
+				hm.Add(0, 7, 1.0);
+				hm.Add(3, 10, 0.4);
 			}
 
 			long timeLast1day = 0;

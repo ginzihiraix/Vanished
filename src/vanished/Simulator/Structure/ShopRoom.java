@@ -100,7 +100,7 @@ public class ShopRoom extends DeliverRoom {
 		// this.Enter(timeNow, shopRoomDef.durationToSell, simulation);
 
 		// 商品を取り出す。
-		Item item = this.shopStockManager.Get(timeNow, itemCatalog.numPick, simulation);
+		double num = this.shopStockManager.Get(timeNow, itemCatalog.numPick, simulation);
 
 		if (simulation == false) {
 			// 売り上げを計上する。
@@ -108,7 +108,7 @@ public class ShopRoom extends DeliverRoom {
 			productInputMoneyEMA.Add(timeNow, itemCatalog.price * itemCatalog.numPick);
 		}
 
-		return item;
+		return new Item(roomDef.productItemDef, num);
 	}
 
 	// 商品価格に対してフォードバックを与える。いくらだったらNo1の選択肢になったのか、各Humanがフィードバックを与える。
