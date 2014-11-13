@@ -1,47 +1,13 @@
 
-#select from deliver, shop, factory, sleep
-type = factory
-
-
-###################################
-# room
-# for deliver, shop, factory, sleep
-###################################
-all.capacityHuman = 1000
-all.capacityItemWeight = 10000
-
-
-###################################
-# RunnableRoom
-# for deliver, shop, factory, sleep
-###################################
-
-
-###################################
-# DeliverRoom
-# for deliver, shop, factory, sleep
-###################################
-stocking.durationForDeliver = 30
-
-
-###################################
-# ShopRoom
-# for shop, factory
-###################################
-shop.durationToSell = 30
-
-shop.product = wood
-shop.capacity = 1000
-shop.lotmax = 30
+product = wood
 
 
 
-###################################
-# FactoryRoom
-# for factory
-###################################
-factory.skill = noskill
-factory.durationForMake = 480
-factory.numProductPerMake = 100
-factory.capacityMaker = 1000000
+skill = noskill
+durationForMake = 240
+numProductPerMake = 5
+capacityMaker = 5
 
+
+durationForSale = 30
+capacitySale = 5

@@ -10,10 +10,8 @@ import vanished.Simulator.Item.ConsumeDef;
 import vanished.Simulator.Item.ItemDef;
 import vanished.Simulator.Skill.Skill;
 import vanished.Simulator.Structure.BuildingDef;
-import vanished.Simulator.Structure.DeliverRoomDef;
 import vanished.Simulator.Structure.FactoryRoomDef;
 import vanished.Simulator.Structure.RoomDef;
-import vanished.Simulator.Structure.ShopRoomDef;
 
 public class DefManager {
 
@@ -107,18 +105,7 @@ public class DefManager {
 
 			System.out.println("Read room definition for " + name);
 
-			String type = p.getProperty("type").toLowerCase();
-
-			RoomDef roomDef = null;
-			if (type.equals("general")) {
-				roomDef = new RoomDef(name, p);
-			} else if (type.equals("deliver")) {
-				roomDef = new DeliverRoomDef(name, p);
-			} else if (type.equals("shop")) {
-				roomDef = new ShopRoomDef(name, p);
-			} else if (type.equals("factory")) {
-				roomDef = new FactoryRoomDef(name, p);
-			}
+			RoomDef roomDef = new FactoryRoomDef(name, p);
 			roomDefList.put(name, roomDef);
 		}
 

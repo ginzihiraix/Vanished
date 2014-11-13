@@ -6,8 +6,6 @@ import vanished.Simulator.Item.ItemDef;
 
 public class StockManager {
 
-	private ItemDef itemDef;
-
 	StockManagerInfo stockManagerInfo;
 
 	private int priceIndex = 0;
@@ -15,8 +13,7 @@ public class StockManager {
 
 	private double numStock;
 
-	public StockManager(ItemDef itemDef, StockManagerInfo stockManagerInfo) {
-		this.itemDef = itemDef;
+	public StockManager(StockManagerInfo stockManagerInfo) {
 		this.stockManagerInfo = stockManagerInfo;
 	}
 

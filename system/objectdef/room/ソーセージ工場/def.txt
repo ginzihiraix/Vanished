@@ -1,57 +1,19 @@
-###################################
-#select from deliver, shop, factory, sleep
-###################################
-type = factory
+
+product = ソーセージ
+
+material.fish.amount = 1
+
+material.water.amount = 1
 
 
-###################################
-# room
-# for deliver, shop, factory, sleep
-###################################
-all.capacityHuman = 1000
-all.capacityItemWeight = 10000
+skill = noskill
+durationForMake = 240
+numProductPerMake = 5
+capacityMaker = 5
 
 
-###################################
-# RunnableRoom
-# for deliver, shop, factory, sleep
-###################################
+durationForDeliver = 30
+capacityDeliver = 5
 
-
-###################################
-# DeliverRoom
-# for deliver, shop, factory, sleep
-###################################
-stocking.durationForDeliver = 30
-
-stocking.material.fish.capacity = 1000
-stocking.material.fish.lotmax = 100
-
-stocking.material.water.capacity = 1000
-stocking.material.water.lotmax = 30
-
-
-
-###################################
-# ShopRoom
-# for shop, factory
-###################################
-shop.durationToSell = 30
-
-shop.product = ソーセージ
-shop.capacity = 1000
-shop.lotmax = 5
-
-
-
-###################################
-# FactoryRoom
-# for factory
-###################################
-factory.material.fish.amount = 1
-factory.material.water.amount = 1
-
-factory.skill = noskill
-factory.durationForMake = 240
-factory.numProductPerMake = 1
-factory.capacityMaker = 10000
+durationForSale = 30
+capacitySale = 5

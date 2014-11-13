@@ -17,14 +17,8 @@ public class DeliverRoomDef extends RoomDef {
 	public DeliverRoomDef(String name, Properties p) throws Exception {
 		super(name, p);
 
-		String prefix = "stocking.";
-
-		this.durationForDeliver = Long.parseLong(p.getProperty(prefix + "durationForDeliver"));
-
 		TreeMap<ItemDef, Boolean> items = new TreeMap<ItemDef, Boolean>(new ItemDefComparator());
-		for (String keyOrg : p.stringPropertyNames()) {
-			if (keyOrg.startsWith(prefix) == false) continue;
-			String key = keyOrg.replace(prefix, "");
+		for (String key : p.stringPropertyNames()) {
 			String[] parts = key.split("\\.");
 			if (parts.length >= 2 && parts[0].equals("material")) {
 				ItemDef itemDef = GlobalParameter.dm.GetItemDef(parts[1]);
@@ -33,8 +27,12 @@ public class DeliverRoomDef extends RoomDef {
 		}
 
 		for (ItemDef itemDef : items.keySet()) {
-			StockManagerInfo smi = new StockManagerInfo(itemDef, prefix + "material." + itemDef.GetName() + ".", p);
+			StockManagerInfo smi = new StockManagerInfo("material." + itemDef.GetName() + ".", p);
 			materialStockManagerInfo.put(itemDef, smi);
+		}
+
+		if (items.size() > 0) {
+			this.durationForDeliver = Long.parseLong(p.getProperty("durationForDeliver"));
 		}
 	}
 }

@@ -12,17 +12,13 @@ public class ShopRoomDef extends DeliverRoomDef {
 
 	ItemDef productItemDef;
 
-	StockManagerInfo productStockManagerInfo;
-
 	public ShopRoomDef(String name, Properties p) throws Exception {
 		super(name, p);
 
-		String prefix = "shop.";
-
-		this.durationToSell = Long.parseLong(p.getProperty(prefix + "durationToSell"));
-
-		String productItemName = p.getProperty(prefix + "product");
+		String productItemName = p.getProperty("product");
 		productItemDef = GlobalParameter.dm.GetItemDef(productItemName);
-		productStockManagerInfo = new StockManagerInfo(productItemDef, prefix, p);
+
+		this.durationToSell = Long.parseLong(p.getProperty("durationForSale"));
+
 	}
 }

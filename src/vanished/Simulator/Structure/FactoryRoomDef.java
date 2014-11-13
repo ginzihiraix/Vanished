@@ -12,9 +12,12 @@ public class FactoryRoomDef extends ShopRoomDef {
 
 	FactoryProductInfo factoryProductInfo;
 
+	// 製造者のキャパシティ
+	double capacityMaker;
+
 	public class FactoryMaterialInfo {
 
-		// 生産するアイテム
+		// 生産に要するアイテム
 		ItemDef itemDef;
 
 		// 製品一個につき必要な量
@@ -36,19 +39,14 @@ public class FactoryRoomDef extends ShopRoomDef {
 		// 一回の労働で生成するアイテムの数
 		double numProductPerMake;
 
-		// 製造者のキャパシティ
-		double capacityMaker;
-
 		public FactoryMakerInfo(Skill skill, String prefix, Properties p) {
 			this.skill = skill;
 			this.durationForMake = Long.parseLong(p.getProperty(prefix + "durationForMake"));
 			this.numProductPerMake = Double.parseDouble(p.getProperty(prefix + "numProductPerMake"));
-			this.capacityMaker = Double.parseDouble(p.getProperty(prefix + "capacityMaker"));
 		}
 	}
 
 	public class FactoryProductInfo {
-		ItemDef itemDef;
 
 		// 製品をnumProductPerWork個作るのに必要な材料
 		TreeMap<ItemDef, FactoryMaterialInfo> factoryMaterialInfo = new TreeMap<ItemDef, FactoryMaterialInfo>(new ItemDefComparator());
@@ -56,8 +54,7 @@ public class FactoryRoomDef extends ShopRoomDef {
 		// 製造できるスキル
 		FactoryMakerInfo factoryMakerInfo;
 
-		public FactoryProductInfo(ItemDef itemDef, String prefix, Properties p) throws Exception {
-			this.itemDef = itemDef;
+		public FactoryProductInfo(String prefix, Properties p) throws Exception {
 
 			TreeMap<ItemDef, Boolean> items = new TreeMap<ItemDef, Boolean>(new ItemDefComparator());
 			for (String keyOrg : p.stringPropertyNames()) {
@@ -84,7 +81,8 @@ public class FactoryRoomDef extends ShopRoomDef {
 	public FactoryRoomDef(String name, Properties p) throws Exception {
 		super(name, p);
 
-		String prefix = "factory.";
-		this.factoryProductInfo = new FactoryProductInfo(this.productItemDef, prefix, p);
+		this.capacityMaker = Double.parseDouble(p.getProperty("capacityMaker"));
+
+		this.factoryProductInfo = new FactoryProductInfo("", p);
 	}
 }

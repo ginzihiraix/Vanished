@@ -2,7 +2,6 @@ package vanished.Simulator.Structure;
 
 import vanished.Simulator.EventLogManager;
 import vanished.Simulator.ExponentialMovingAverage;
-import vanished.Simulator.HumanSimulationException;
 
 public class Room {
 
@@ -62,19 +61,19 @@ public class Room {
 	}
 
 	// •”‰®‚É“ü‚ê‚é‚©‚Ç‚¤‚©’²‚×‚éB
-	private boolean IsEnterable(long timeStart, long duration) {
-		// •”‰®‚É“ü‚ê‚é‚©‚Ç‚¤‚©’²‚×‚éB
-		double num = humanExistRoomManager.MaxNum(timeStart, duration);
-		if (num + 1 > roomDef.capacityHuman) return false;
-		return true;
-	}
+	// private boolean IsEnterable(long timeStart, long duration) {
+	// // •”‰®‚É“ü‚ê‚é‚©‚Ç‚¤‚©’²‚×‚éB
+	// double num = humanExistRoomManager.MaxNum(timeStart, duration);
+	// if (num + 1 > roomDef.capacityHuman) return false;
+	// return true;
+	// }
 
-	public void Enter(long timeNow, long duration, boolean simulation) throws HumanSimulationException {
-		if (this.IsEnterable(timeNow, duration) == false) throw new HumanSimulationException("RunnableRoom.Work : human capacity is full");
-		if (simulation == false) {
-			humanExistRoomManager.Add(timeNow, duration, 1);
-		}
-	}
+	// public void Enter(long timeNow, long duration, boolean simulation) throws HumanSimulationException {
+	// if (this.IsEnterable(timeNow, duration) == false) throw new HumanSimulationException("RunnableRoom.Work : human capacity is full");
+	// if (simulation == false) {
+	// humanExistRoomManager.Add(timeNow, duration, 1);
+	// }
+	// }
 
 	public void AddMoney(long timeNow, double add) {
 		this.money += add;

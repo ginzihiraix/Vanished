@@ -36,7 +36,7 @@ public class Building {
 
 		if (buildingDef.nobuildFlag == false) {
 			buildCompletedFlag = false;
-			buildRoom = new FactoryRoom(this, buildingDef.buildRoomDef, true);
+			// buildRoom = new FactoryRoom(this, buildingDef.buildRoomDef, true);
 		} else {
 			buildCompletedFlag = true;
 			buildRoom = null;

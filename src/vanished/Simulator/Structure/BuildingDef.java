@@ -13,7 +13,7 @@ public class BuildingDef extends ObjectDef {
 	public boolean nobuildFlag = false;
 
 	// ƒrƒ‹ŒšİŒ»ê
-	FactoryRoomDef buildRoomDef;
+	// FactoryRoomDef buildRoomDef;
 
 	// ŠeRoom‚Ì’è‹`
 	ArrayList<RoomDef> roomdefList = new ArrayList<RoomDef>();
@@ -28,7 +28,7 @@ public class BuildingDef extends ObjectDef {
 	public BuildingDef(String name, Properties p) throws Exception {
 		this.name = name;
 
-		buildRoomDef = new FactoryRoomDef(name, p);
+		// buildRoomDef = new FactoryRoomDef(name, p);
 
 		for (String key : p.stringPropertyNames()) {
 			if (key.startsWith("room.") == false) continue;

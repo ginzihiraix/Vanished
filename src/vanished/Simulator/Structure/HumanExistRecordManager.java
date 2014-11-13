@@ -5,6 +5,12 @@ import java.util.LinkedList;
 
 public class HumanExistRecordManager {
 
+	int capacity;
+
+	public HumanExistRecordManager(int capacity) {
+		this.capacity = capacity;
+	}
+
 	public class HumanExistRecord {
 		public long timeStart;
 		public long duration;

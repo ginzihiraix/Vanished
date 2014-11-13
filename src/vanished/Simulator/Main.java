@@ -1,6 +1,5 @@
 package vanished.Simulator;
 
-import vanished.GUI.GUI_Game;
 
 public class Main {
 
