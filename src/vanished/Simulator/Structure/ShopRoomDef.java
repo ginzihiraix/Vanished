@@ -12,6 +12,8 @@ public class ShopRoomDef extends DeliverRoomDef {
 
 	ItemDef productItemDef;
 
+	StockManagerInfo productStockManagerInfo;
+
 	public ShopRoomDef(String name, Properties p) throws Exception {
 		super(name, p);
 
@@ -20,5 +22,6 @@ public class ShopRoomDef extends DeliverRoomDef {
 
 		this.durationToSell = Long.parseLong(p.getProperty("durationForSale"));
 
+		this.productStockManagerInfo = new StockManagerInfo("", p);
 	}
 }

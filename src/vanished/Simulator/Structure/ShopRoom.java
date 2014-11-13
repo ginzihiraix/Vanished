@@ -12,14 +12,15 @@ public class ShopRoom extends DeliverRoom {
 	public ShopRoom(Building building, ShopRoomDef roomDef) {
 		super(building, roomDef);
 
-		shopStockManager = new StockManager(roomDef.productItemDef, roomDef.productStockManagerInfo);
+		shopStockManager = new StockManager(roomDef.productStockManagerInfo);
 	}
 
 	public void DumpStatus(long timeNow) {
 		super.DumpStatus(timeNow);
 
+		ShopRoomDef roomDef = (ShopRoomDef) this.roomDef;
 		System.out.println("===Shop Department===");
-		System.out.println("product name : " + this.shopStockManager.stockManagerInfo.itemDef.GetName());
+		System.out.println("product name : " + roomDef.productItemDef.GetName());
 		System.out.println("product stock : " + this.shopStockManager.GetNumStock());
 		System.out.println("product price : " + this.shopStockManager.GetPriceWithRate());
 	}
@@ -34,11 +35,13 @@ public class ShopRoom extends DeliverRoom {
 	}
 
 	public String GetProductItemName() {
-		return shopStockManager.stockManagerInfo.itemDef.GetName();
+		ShopRoomDef roomDef = (ShopRoomDef) this.roomDef;
+		return roomDef.productItemDef.GetName();
 	}
 
 	public ItemDef GetProductItemDef() {
-		return shopStockManager.stockManagerInfo.itemDef;
+		ShopRoomDef roomDef = (ShopRoomDef) this.roomDef;
+		return roomDef.productItemDef;
 	}
 
 	public class ItemCatalog {
@@ -59,7 +62,7 @@ public class ShopRoom extends DeliverRoom {
 
 	// 販売商品の一覧を取得する。
 	public ItemCatalog GetProductItem(double maxMoney, double maxNumPick) {
-		ShopRoomDef shopRoomDef = (ShopRoomDef) roomDef;
+		ShopRoomDef roomDef = (ShopRoomDef) this.roomDef;
 
 		double price = this.shopStockManager.GetPriceWithRate();
 		int priceIndex = this.shopStockManager.GetPriceIndex();
@@ -73,17 +76,14 @@ public class ShopRoom extends DeliverRoom {
 			// 価格による制約
 			double numPickForMoney = maxMoney / price;
 			if (numPickForMoney < minNumPick) minNumPick = numPickForMoney;
-
-			// 一回に運び込める量による制約
-			if (this.shopStockManager.stockManagerInfo.lotmax < minNumPick) minNumPick = this.shopStockManager.stockManagerInfo.lotmax;
 		}
 
 		// 購入に要する時間を決める。
 		// TODO:個数に比例してかかる。仮
 		// long duration = (long) (shopRoomDef.durationToSell * minNumPick) + 1;
-		long duration = shopRoomDef.durationToSell;
+		long duration = roomDef.durationToSell;
 
-		ItemCatalog itemCatalog = new ItemCatalog(this.shopStockManager.stockManagerInfo.itemDef, price, priceIndex, minNumPick, duration);
+		ItemCatalog itemCatalog = new ItemCatalog(roomDef.productItemDef, price, priceIndex, minNumPick, duration);
 		return itemCatalog;
 	}
 
@@ -93,11 +93,11 @@ public class ShopRoom extends DeliverRoom {
 
 	// 商品を買う
 	public Item BuyProductItem(long timeNow, ItemCatalog itemCatalog, boolean simulation) throws Exception {
-		ShopRoomDef shopRoomDef = (ShopRoomDef) roomDef;
+		ShopRoomDef roomDef = (ShopRoomDef) this.roomDef;
 
 		if (itemCatalog.numPick <= 0) throw new HumanSimulationException("numPick <= 0");
 
-		this.Enter(timeNow, shopRoomDef.durationToSell, simulation);
+		// this.Enter(timeNow, shopRoomDef.durationToSell, simulation);
 
 		// 商品を取り出す。
 		Item item = this.shopStockManager.Get(timeNow, itemCatalog.numPick, simulation);
