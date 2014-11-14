@@ -12,6 +12,9 @@ public class DeliverRoomDef extends RoomDef {
 	// ”[“ü‚É•K—v‚ÈŽžŠÔ
 	long durationForDeliver;
 
+	//
+	int capacityDeliver;
+
 	TreeMap<ItemDef, StockManagerInfo> materialStockManagerInfo = new TreeMap<ItemDef, StockManagerInfo>(new ItemDefComparator());
 
 	public DeliverRoomDef(String name, Properties p) throws Exception {
@@ -33,6 +36,7 @@ public class DeliverRoomDef extends RoomDef {
 
 		if (items.size() > 0) {
 			this.durationForDeliver = Long.parseLong(p.getProperty("durationForDeliver"));
+			this.capacityDeliver = Integer.parseInt(p.getProperty("capacityDeliver"));
 		}
 	}
 }

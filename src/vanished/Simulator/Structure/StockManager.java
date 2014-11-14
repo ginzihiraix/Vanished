@@ -1,17 +1,15 @@
 package vanished.Simulator.Structure;
 
 import vanished.Simulator.ExponentialMovingAverage;
-import vanished.Simulator.Item.Item;
-import vanished.Simulator.Item.ItemDef;
 
 public class StockManager {
 
 	StockManagerInfo stockManagerInfo;
 
+	private double numStock;
+
 	private int priceIndex = 0;
 	private double priceStepSize = 1.01;
-
-	private double numStock;
 
 	public StockManager(StockManagerInfo stockManagerInfo) {
 		this.stockManagerInfo = stockManagerInfo;
@@ -52,7 +50,6 @@ public class StockManager {
 			numStock += numPut;
 			this.numStockEMA.Add(timeNow, numStock);
 			this.inputStockEMA.Add(timeNow, numPut);
-		} else {
 		}
 	}
 

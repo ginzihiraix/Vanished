@@ -5,7 +5,7 @@ import java.util.ArrayList;
 import vanished.Simulator.Item.ItemDef;
 import vanished.Simulator.Structure.Building;
 import vanished.Simulator.Structure.FactoryRoom;
-import vanished.Simulator.Structure.HumanExistRecordManager;
+import vanished.Simulator.Structure.HumanCapacityManager;
 import vanished.Simulator.Structure.Room;
 
 public class SimulationMain extends Thread {
@@ -42,8 +42,8 @@ public class SimulationMain extends Thread {
 			}
 
 			// XXX:ƒeƒXƒg
-			if (true) {
-				HumanExistRecordManager hm = new HumanExistRecordManager(2);
+			if (false) {
+				HumanCapacityManager hm = new HumanCapacityManager(2);
 				hm.Add(0, 5, 0.8);
 				hm.Add(0, 7, 1.0);
 				hm.Add(3, 10, 0.4);

@@ -1,20 +1,17 @@
 package vanished.Simulator.Structure;
 
-import java.util.Iterator;
-import java.util.LinkedList;
-
-public class HumanExistRecordManager {
+public class HumanCapacityManager {
 
 	int capacity;
 
 	long timeBase = 0L;
-	double[] counter = new double[10];
+	double[] counter = new double[3];
 
-	public HumanExistRecordManager(int capacity) {
+	public HumanCapacityManager(int capacity) {
 		this.capacity = capacity;
 	}
 
-	public long Add(long timeStart, long duration, double prob) throws Exception {
+	public long Add(long timeStart, long duration, double prob, boolean simulation) throws Exception {
 
 		// ‹L˜^‚·‚éêŠ‚ª–³‚¯‚ê‚ÎL‚°‚éB
 		{
@@ -40,7 +37,9 @@ public class HumanExistRecordManager {
 				timeNow++;
 			}
 
-			long timeEnd = timeNow + 1;
+			if (simulation == true) return timeNow;
+
+			long timeEnd = timeNow;
 
 			if (timeEnd > timeBase + counter.length) {
 				int length = (int) (timeEnd - timeBase);

@@ -12,6 +12,9 @@ public class DeliverRoom extends Room {
 
 	TreeMap<ItemDef, StockManager> deliverStockManager = new TreeMap<ItemDef, StockManager>(new ItemDefComparator());
 
+	// 部屋にいる人のリスト
+	private HumanCapacityManager deliverHumanCapacityManager;
+
 	public DeliverRoom(Building building, DeliverRoomDef roomDef) {
 		super(building, roomDef);
 
@@ -21,6 +24,8 @@ public class DeliverRoom extends Room {
 			StockManager sm = new StockManager(smi);
 			deliverStockManager.put(itemDef, sm);
 		}
+
+		deliverHumanCapacityManager = new HumanCapacityManager(roomDef.capacityDeliver);
 	}
 
 	public void DumpStatus(long timeNow) {
@@ -99,27 +104,41 @@ public class DeliverRoom extends Room {
 		sm.SetPriceWithIndex(priceIndex);
 	}
 
-	// アイテムを売る。
-	public void SellItem(long timeNow, CallForItem callForItem, boolean simulation) throws Exception {
+	public class DeliverResult {
+		long timeEnd;
 
-		// アイテムを格納する。
-		StockManager sm = deliverStockManager.get(callForItem.itemDef);
-
-		sm.Put(timeNow, callForItem.numPick, simulation);
-
-		if (simulation == false) {
-			// 金を払う。
-			this.AddMoney(timeNow, -callForItem.price * callForItem.numPick);
-			materialOutputMoneyEMA.Add(timeNow, callForItem.price * callForItem.numPick);
+		public DeliverResult(long timeEnd) {
+			this.timeEnd = timeEnd;
 		}
 	}
 
-	// 商品価格に対してフォードバックを与える。いくらだったらNo1の選択肢になったのか、各Humanがフィードバックを与える。
-	public void FeedbackAboutDeliverPrice(ItemDef itemDef, int priceIndex, double quantity) {
-		// System.out.println("FeedbackAboutDeliverPrice : " + this.roomDef.name + ", " + itemDef.GetName() + ", " + price + ", " + quantity);
-		StockManager sm = deliverStockManager.get(itemDef);
-		sm.Feedback(priceIndex, quantity);
+	// アイテムを売る。
+	public DeliverResult SellItem(long timeNow, CallForItem callForItem, double prob, boolean simulation) throws Exception {
+
+		long timeEnd = this.deliverHumanCapacityManager.Add(timeNow, callForItem.durationToSell, prob, simulation);
+
+		// アイテムを格納する。
+		StockManager sm = deliverStockManager.get(callForItem.itemDef);
+		sm.Put(timeNow, callForItem.numPick * prob, simulation);
+
+		// 金を払う。
+		double pay = callForItem.price * callForItem.numPick;
+		this.AddMoney(timeNow, -pay * prob, simulation);
+
+		// 統計情報を記録する。
+		if (simulation == false) {
+			materialOutputMoneyEMA.Add(timeNow, pay * prob);
+		}
+
+		return new DeliverResult(timeEnd);
 	}
+
+	// 商品価格に対してフォードバックを与える。いくらだったらNo1の選択肢になったのか、各Humanがフィードバックを与える。
+	// public void FeedbackAboutDeliverPrice(ItemDef itemDef, int priceIndex, double quantity) {
+	// System.out.println("FeedbackAboutDeliverPrice : " + this.roomDef.name + ", " + itemDef.GetName() + ", " + price + ", " + quantity);
+	// StockManager sm = deliverStockManager.get(itemDef);
+	// sm.Feedback(priceIndex, quantity);
+	// }
 
 	// ////////////////////////////////////////////////////////
 	// ////////////////////////////////////////////////////////
